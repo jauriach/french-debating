@@ -1,0 +1,2514 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>polem.os</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..800;1,6..96,400..700&family=Chakra+Petch:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* Mise en page : le fronton (motion) en haut, deux bancs face à face, la tribune (chrono) au centre,
+   le plan de la chambre (deux bancs face à face, comme aux Communes) au pied. Univers unique « séance de nuit », variante « salle éclairée ». */
+:root{
+  --nuit:#090d18;      /* fond : bleu nuit de séance */
+  --nuit-2:#0f1527;    /* surfaces */
+  --nuit-3:#18213b;    /* surfaces relevées */
+  --trait:#27314f;     /* filets */
+  --marbre:#ece9e1;    /* texte : marbre */
+  --marbre-2:#a5adc4;  /* texte secondaire */
+  --marbre-3:#6d7695;  /* texte tertiaire */
+  --or:#d4ad58;        /* dorures : accent */
+  --or-2:#8d7234;
+  --gouv:#6290ff;      /* bleu du Gouvernement */
+  --oppo:#f0535e;      /* rouge velours de l'Opposition */
+  --ok:#46d49b; --alerte:#ffb547; --danger:#ff5b5b;
+  --f-titre:"Bodoni Moda","Didot","Bodoni 72","Bodoni MT",Georgia,serif;
+  --f-hud:"Chakra Petch","Bahnschrift","DIN Alternate","Segoe UI",sans-serif;
+  --f-texte:"Hanken Grotesk","Segoe UI",system-ui,-apple-system,sans-serif;
+  --r:6px;
+  color-scheme:dark;
+}
+body[data-salle="jour"]{
+  --nuit:#edf0f5; --nuit-2:#ffffff; --nuit-3:#e1e6ef; --trait:#c2cada;
+  --marbre:#0c1324; --marbre-2:#3a4462; --marbre-3:#68718e;
+  --or:#946f17; --or-2:#b99549;
+  --gouv:#1c4fd6; --oppo:#c71f2e;
+  --ok:#0d8656; --alerte:#a55f00; --danger:#c21c1c;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--marbre);font-family:var(--f-texte);font-size:15px;line-height:1.5;
+  background:
+    radial-gradient(80% 55% at 50% 112%, color-mix(in srgb,var(--or) 10%,transparent), transparent 70%),
+    var(--nuit);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+kbd{font-family:var(--f-hud);font-size:.78em;font-weight:600;letter-spacing:.04em;padding:.1em .45em;border:1px solid var(--trait);border-bottom-width:2px;border-radius:4px;background:var(--nuit-3);color:var(--marbre);white-space:nowrap}
+.hud{font-family:var(--f-hud);text-transform:uppercase;letter-spacing:.16em;font-size:.72rem;color:var(--marbre-2);font-weight:500}
+
+/* ---------- Boutons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;border-radius:var(--r);border:1px solid var(--trait);background:var(--nuit-3);padding:.55em 1em;cursor:pointer;font-weight:600;line-height:1.2;transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--or-2)}
+.btn-or{background:var(--or);border-color:var(--or);color:#120d02}
+.btn-or:hover{background:color-mix(in srgb,var(--or) 85%,#fff)}
+.btn-ghost{background:transparent}
+.btn-mini{font-size:.82rem;padding:.35em .7em;font-weight:500}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* ---------- Paramétrage ---------- */
+.v-setup{max-width:1180px;margin:0 auto;padding-block:clamp(20px,4vw,48px) 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.masthead{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px 28px;align-items:center;padding-bottom:22px;border-bottom:1px solid var(--trait)}
+.masthead svg{width:84px;height:auto}
+.app-nom{font-family:var(--f-titre);font-weight:700;font-size:clamp(2.4rem,6vw,4rem);line-height:.95;margin:0;letter-spacing:-.01em}
+.app-nom .os{font-family:var(--f-hud);font-weight:500;font-size:.62em;letter-spacing:.02em;color:var(--or);margin-left:.04em}
+.app-sous{margin:.45rem 0 0;color:var(--marbre-2);max-width:46ch}
+.restore{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:14px 16px;border:1px solid var(--or-2);border-radius:var(--r);background:color-mix(in srgb,var(--or) 10%,var(--nuit-2))}
+.restore p{margin:0;flex:1 1 20rem}
+
+.setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 32px}
+.bloc{margin:0;padding:0;border:0;min-width:0;display:flex;flex-direction:column;gap:12px}
+.bloc-large{grid-column:1 / -1}
+.bloc-titre{display:flex;align-items:baseline;gap:12px;padding:0;margin:0 0 4px;font-family:var(--f-hud);text-transform:uppercase;letter-spacing:.18em;font-size:.8rem;color:var(--marbre-2);font-weight:600;width:100%;border-top:1px solid var(--trait);padding-top:14px}
+.bloc-titre .num{font-family:var(--f-titre);font-size:1.5rem;letter-spacing:0;color:var(--or);font-style:italic;text-transform:none}
+.champ{display:flex;flex-direction:column;gap:6px;min-width:0}
+.champ label,.lbl{font-weight:600;font-size:.88rem}
+.aide{margin:0;color:var(--marbre-3);font-size:.82rem}
+input[type=text],textarea,select{width:100%;background:var(--nuit);border:1px solid var(--trait);border-radius:var(--r);padding:.6em .75em;min-width:0}
+textarea{resize:vertical}
+#f-motion{font-family:var(--f-titre);font-style:italic;font-size:1.3rem;line-height:1.3}
+input::placeholder,textarea::placeholder{color:var(--marbre-3)}
+.type-motion{display:inline-flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.chip{font-family:var(--f-hud);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;padding:.2em .6em;border-radius:99px;border:1px solid var(--or-2);color:var(--or);white-space:nowrap}
+
+.equipes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.equipe{--eq:var(--gouv);background:var(--nuit-2);border:1px solid var(--trait);border-top:3px solid var(--eq);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.equipe[data-eq="O"]{--eq:var(--oppo)}
+.eq-tete{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.eq-cote{font-family:var(--f-titre);font-weight:700;font-size:1.5rem;color:var(--eq)}
+.eq-outils{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stepper{align-self:flex-start;display:inline-flex;align-items:stretch;border:1px solid var(--trait);border-radius:var(--r);overflow:hidden;background:var(--nuit)}
+.stepper button{width:2.3em;border:0;background:var(--nuit-3);cursor:pointer;font-size:1.05rem;font-weight:700}
+.stepper button:hover{background:color-mix(in srgb,var(--or) 18%,var(--nuit-3))}
+.stepper output,.stepper input{min-width:3.4em;width:4.6em;text-align:center;font-family:var(--f-hud);font-weight:600;font-size:1.05rem;display:flex;align-items:center;justify-content:center;border:0;border-radius:0;background:transparent;padding:.35em .2em}
+.eq-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.eq-liste li{display:grid;grid-template-columns:2rem minmax(0,1fr) auto;gap:8px;align-items:center}
+.eq-rang{font-family:var(--f-hud);color:var(--marbre-3);font-size:.85rem;text-align:right}
+.eq-champ{display:flex;flex-direction:column;gap:2px;min-width:0}
+.eq-role{font-family:var(--f-hud);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--eq)}
+.eq-champ input{padding:.45em .65em}
+.eq-move{display:flex;gap:2px}
+.eq-move button{width:1.9em;height:1.9em;border-radius:4px;border:1px solid var(--trait);background:transparent;cursor:pointer;color:var(--marbre-2);font-size:.8rem}
+.eq-move button:hover{border-color:var(--or-2);color:var(--marbre)}
+.coller{display:flex;flex-direction:column;gap:8px}
+.note-exemple{margin:0;font-size:.85rem;color:var(--alerte)}
+
+.temps-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.switch{display:flex;align-items:center;gap:12px;cursor:pointer;font-weight:600;font-size:.92rem}
+.switch input{appearance:none;width:42px;height:24px;border-radius:99px;background:var(--nuit-3);border:1px solid var(--trait);position:relative;cursor:pointer;flex:none;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--marbre-2);transition:transform .15s,background .15s}
+.switch input:checked{background:color-mix(in srgb,var(--or) 40%,var(--nuit-3));border-color:var(--or-2)}
+.switch input:checked::after{transform:translateX(18px);background:var(--or)}
+.ligne{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+input[type=range]{accent-color:var(--or);width:min(220px,100%)}
+.vu{height:6px;width:min(220px,100%);background:var(--nuit-3);border-radius:3px;overflow:hidden}
+.vu i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--or));transition:width .08s}
+.statut-micro{font-size:.85rem;color:var(--marbre-2)}
+.statut-micro.err{color:var(--alerte)}
+
+.ordre-wrap{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:24px;align-items:start}
+.ordre-wrap figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.ordre-wrap svg{width:100%;height:auto}
+.ordre-liste{list-style:none;margin:0;padding:0;columns:2 15rem;column-gap:24px}
+.ordre-liste li{break-inside:avoid;display:grid;grid-template-columns:2.2rem minmax(0,1fr);gap:8px;padding:5px 0;border-bottom:1px solid color-mix(in srgb,var(--trait) 60%,transparent)}
+.ordre-liste .n{font-family:var(--f-hud);color:var(--marbre-3)}
+.ordre-liste .o-nom{font-weight:600}
+.ordre-liste .o-role{display:block;font-size:.78rem;color:var(--eq)}
+.ordre-liste li[data-eq="G"]{--eq:var(--gouv)} .ordre-liste li[data-eq="O"]{--eq:var(--oppo)}
+.ordre-resume{margin:0;color:var(--marbre-2)}
+.lancement{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;padding-top:8px}
+.btn-ouvrir{font-family:var(--f-hud);text-transform:uppercase;letter-spacing:.18em;font-size:1rem;padding:1em 2em}
+
+/* ---------- Séance ---------- */
+.v-debate{--eq:var(--or);position:relative;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:clamp(8px,1.5vh,18px);padding-block:clamp(10px,2vh,22px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow:hidden}
+.v-debate::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(color-mix(in srgb,var(--trait) 45%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--trait) 45%,transparent) 1px,transparent 1px);
+  background-size:56px 56px;-webkit-mask-image:radial-gradient(70% 60% at 50% 45%,#000 0%,transparent 75%);mask-image:radial-gradient(70% 60% at 50% 45%,#000 0%,transparent 75%)}
+.v-debate>*{position:relative}
+.v-debate[data-eq="G"]{--eq:var(--gouv)} .v-debate[data-eq="O"]{--eq:var(--oppo)}
+.fronton{display:grid;grid-template-columns:minmax(9rem,1fr) minmax(0,3.4fr) minmax(9rem,1fr);gap:16px;align-items:center;padding-bottom:clamp(6px,1.2vh,14px);border-bottom:1px solid var(--trait)}
+.fr-g,.fr-d{display:flex;flex-direction:column;gap:4px}
+.fr-d{align-items:flex-end;text-align:right}
+.horloge{font-family:var(--f-hud);font-weight:600;font-size:clamp(1rem,2.6vmin,1.7rem);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.fr-c{text-align:center;min-width:0}
+.motion{font-family:var(--f-titre);font-style:italic;font-weight:500;font-size:clamp(1.05rem,3vmin,2.3rem);line-height:1.18;margin:2px 0 0;text-wrap:balance}
+.pastilles{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.pastille{font-family:var(--f-hud);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;padding:.25em .65em;border-radius:99px;border:1px solid var(--trait);color:var(--marbre-2);display:inline-flex;align-items:center;gap:6px}
+.pastille.rec{border-color:color-mix(in srgb,var(--danger) 60%,transparent);color:var(--danger)}
+.pastille.rec::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--danger);animation:clignote 1.4s infinite}
+
+.chambre{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.55fr) minmax(0,1fr);gap:clamp(10px,2vw,32px);min-height:0}
+.banc{--eq:var(--gouv);display:flex;flex-direction:column;min-height:0;background:color-mix(in srgb,var(--nuit-2) 78%,transparent);border:1px solid var(--trait);border-top:3px solid var(--eq);border-radius:var(--r);padding:clamp(8px,1.5vh,16px) clamp(8px,1vw,14px)}
+.banc-o{--eq:var(--oppo)}
+.banc-tete{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 8px;margin-bottom:clamp(4px,1vh,10px)}
+.banc-cote{font-family:var(--f-titre);font-weight:700;font-size:clamp(1.05rem,2.7vmin,1.9rem);color:var(--eq);margin:0;line-height:1.1}
+.banc-equipe{display:block;font-family:var(--f-hud);font-size:clamp(.66rem,1.3vmin,.85rem);letter-spacing:.1em;text-transform:uppercase;color:var(--marbre-2);font-weight:500}
+.banc-score{font-family:var(--f-hud);font-size:clamp(.7rem,1.4vmin,.9rem);color:var(--marbre-2);text-align:right;white-space:nowrap}
+.banc-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;overflow:auto;min-height:0;scrollbar-width:thin}
+.bi{display:grid;grid-template-columns:2ch minmax(0,1fr) auto;gap:0 10px;align-items:center;padding:clamp(3px,.75vh,9px) 8px;border-radius:4px;border:1px solid transparent}
+.bi-num{font-family:var(--f-hud);color:var(--marbre-3);font-size:clamp(.7rem,1.4vmin,.9rem);grid-row:span 2}
+.bi-nom{font-weight:600;font-size:clamp(.9rem,2.15vmin,1.45rem);line-height:1.2;min-width:0;overflow-wrap:anywhere}
+.bi-meta{grid-column:2;font-size:clamp(.66rem,1.35vmin,.88rem);color:var(--marbre-2);line-height:1.25}
+.bi-stat{grid-column:3;grid-row:1 / span 2;font-family:var(--f-hud);font-weight:600;font-size:clamp(.8rem,1.8vmin,1.15rem);font-variant-numeric:tabular-nums;color:var(--marbre-2)}
+.bi.st-courant{background:color-mix(in srgb,var(--eq) 20%,transparent);border-color:color-mix(in srgb,var(--eq) 70%,transparent)}
+.bi.st-courant .bi-stat{color:var(--eq)}
+.bi.st-fait .bi-nom{color:var(--marbre-2)}
+.bi.st-absent .bi-nom{text-decoration:line-through;color:var(--marbre-3)}
+.bi .over{color:var(--danger)} .bi .grace{color:var(--alerte)}
+.banc.dense .bi{padding-block:2px}
+
+.tribune{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,1.4vh,16px);min-height:0;position:relative;text-align:center}
+.appel{font-family:var(--f-hud);font-size:clamp(.72rem,1.6vmin,1rem);letter-spacing:.2em;text-transform:uppercase;color:var(--eq);margin:0;font-weight:600}
+.nom-orateur{font-family:var(--f-titre);font-weight:700;font-size:clamp(1.5rem,5.4vmin,4.3rem);line-height:1.02;margin:0;text-wrap:balance;max-width:100%;overflow-wrap:anywhere}
+.ring-wrap{position:relative;width:min(44vmin,440px);max-width:100%;aspect-ratio:1;flex:none}
+.ring-wrap svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ring-ticks{fill:none;stroke:var(--marbre-3);stroke-width:5;opacity:.55}
+.ring-track{fill:none;stroke:var(--nuit-3);stroke-width:12}
+.ring-prot{fill:none;stroke:color-mix(in srgb,var(--or) 45%,transparent);stroke-width:12}
+.ring-prog{fill:none;stroke:var(--eq);stroke-width:12;stroke-linecap:butt;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--eq) 60%,transparent))}
+.ring-grace{fill:none;stroke:var(--danger);stroke-width:4}
+.ring-poi{fill:none;stroke:var(--or);stroke-width:3}
+.ring-centre{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(2px,.6vh,8px);padding:14%}
+.phase{font-family:var(--f-hud);font-weight:600;font-size:clamp(.66rem,1.55vmin,1rem);letter-spacing:.16em;text-transform:uppercase;color:var(--marbre-2);margin:0;line-height:1.2}
+.temps{font-family:var(--f-hud);font-weight:600;font-size:clamp(2.6rem,12.5vmin,9.6rem);line-height:.95;margin:0;letter-spacing:.01em;white-space:nowrap}
+.temps.long{font-size:clamp(2.1rem,10vmin,7.6rem)}
+.temps .d{display:inline-block;width:.6em;text-align:center}
+.temps .s{display:inline-block;width:.32em;text-align:center}
+.temps .p{display:inline-block;width:.58em;text-align:center}
+.sous-temps{font-family:var(--f-hud);font-size:clamp(.66rem,1.5vmin,.95rem);color:var(--marbre-3);margin:0;letter-spacing:.06em}
+.v-debate[data-phase="ouvert"] .phase{color:var(--ok)}
+.v-debate[data-phase="protege"] .phase{color:var(--or)}
+.v-debate[data-phase="grace"] .phase,.v-debate[data-phase="grace"] .temps{color:var(--alerte)}
+.v-debate[data-phase="grace"] .ring-prog{stroke:var(--alerte)}
+.v-debate[data-phase="depasse"] .phase,.v-debate[data-phase="depasse"] .temps{color:var(--danger)}
+.v-debate[data-phase="depasse"] .ring-prog{stroke:var(--danger)}
+.v-debate[data-phase="depasse"] .temps{animation:clignote 1s steps(2) infinite}
+.v-debate[data-etat="pret"] .temps{color:var(--marbre-2)}
+.poi-ligne{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;align-items:center;font-family:var(--f-hud);font-size:clamp(.7rem,1.6vmin,1rem);color:var(--marbre-2);letter-spacing:.06em}
+.poi-pts{display:inline-flex;gap:6px;align-items:center}
+.poi-pts i{width:clamp(9px,1.4vmin,14px);height:clamp(9px,1.4vmin,14px);border-radius:50%;border:2px solid var(--or-2)}
+.poi-pts i.on{background:var(--or);border-color:var(--or)}
+.poi-pts i.plus{background:var(--alerte);border-color:var(--alerte)}
+.poi-banniere{position:absolute;left:50%;top:6%;transform:translateX(-50%);width:min(560px,96%);background:color-mix(in srgb,var(--nuit-2) 92%,transparent);border:1px solid var(--or);border-radius:var(--r);padding:10px 16px 12px;box-shadow:0 12px 40px rgba(0,0,0,.45);z-index:3;display:flex;flex-direction:column;gap:6px}
+.poi-banniere .hud{color:var(--or)}
+.poi-qui{font-family:var(--f-titre);font-size:clamp(1rem,2.6vmin,1.7rem);font-weight:600;margin:0;line-height:1.2}
+.poi-barre{height:4px;background:var(--nuit-3);border-radius:2px;overflow:hidden}
+.poi-barre i{display:block;height:100%;background:var(--or);width:100%}
+.voile{position:absolute;inset:-4px;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1.8vh,18px);text-align:center;padding:16px;border-radius:var(--r);background:color-mix(in srgb,var(--nuit) 88%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--trait)}
+.voile-titre{font-family:var(--f-titre);font-style:italic;font-weight:600;font-size:clamp(1.8rem,6vmin,4.4rem);margin:0;line-height:1.05;text-wrap:balance}
+.voile-sous{margin:0;font-family:var(--f-hud);letter-spacing:.08em;color:var(--marbre-2);font-size:clamp(.8rem,1.9vmin,1.15rem)}
+
+.pied{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:clamp(12px,2vw,32px);align-items:end;min-height:0}
+.pied.sans-registre{grid-template-columns:minmax(0,1fr)}
+.plan-bloc{display:grid;grid-template-columns:minmax(0,clamp(170px,34vmin,330px)) minmax(0,1fr);gap:12px 18px;align-items:end}
+.plan-bloc svg{width:100%;height:auto;display:block}
+.suivant{margin:0;display:flex;flex-direction:column;gap:2px;padding-bottom:4px}
+.suivant strong{font-family:var(--f-titre);font-size:clamp(1rem,2.5vmin,1.6rem);line-height:1.15}
+.suivant span.r{font-size:clamp(.7rem,1.5vmin,.9rem);color:var(--marbre-2)}
+.plan .eq-G{--eq:var(--gouv)} .plan .eq-O{--eq:var(--oppo)}
+.banquette{fill:color-mix(in srgb,var(--eq) 9%,transparent);stroke:color-mix(in srgb,var(--eq) 40%,transparent);stroke-width:1}
+.ligne-rouge{stroke:var(--danger);stroke-width:1.2;stroke-dasharray:5 4;opacity:.6}
+.table-chambre{fill:var(--nuit-3);stroke:var(--trait);stroke-width:1}
+.boite{fill:var(--or-2)}
+.fauteuil{fill:var(--nuit-3);stroke:var(--or);stroke-width:1.6}
+.barre-chambre{stroke:var(--marbre-3);stroke-width:2;stroke-linecap:round}
+.siege{--eq:var(--gouv)} .siege.eq-O{--eq:var(--oppo)}
+.siege circle{fill:color-mix(in srgb,var(--eq) 18%,transparent);stroke:var(--eq);stroke-width:1.5}
+.siege text{fill:var(--marbre-2);font-family:var(--f-hud);font-size:10px;font-weight:600;text-anchor:middle;dominant-baseline:central}
+.siege.fait circle{fill:color-mix(in srgb,var(--eq) 55%,var(--nuit))}
+.siege.fait text{fill:var(--marbre)}
+.siege.absent circle{fill:none;stroke-dasharray:2 2;opacity:.6}
+.siege.courant circle{fill:var(--eq);stroke:var(--or);stroke-width:3}
+.siege.courant text{fill:#fff}
+.siege.courant .halo{fill:none;stroke:var(--or);stroke-width:1.5;animation:halo 1.8s ease-out infinite;transform-box:fill-box;transform-origin:center}
+.registre{border:1px solid var(--trait);border-radius:var(--r);background:color-mix(in srgb,var(--nuit-2) 80%,transparent);padding:10px 14px;min-height:0;display:flex;flex-direction:column;gap:6px;max-height:clamp(90px,21vh,240px)}
+.registre-tete{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.registre ol{list-style:none;margin:0;padding:0;overflow:auto;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin}
+.registre li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;font-size:clamp(.82rem,1.9vmin,1.2rem);line-height:1.3}
+.registre li.neuf{animation:arrive .6s ease-out}
+.rg-t{font-family:var(--f-hud);color:var(--or);font-variant-numeric:tabular-nums;font-size:.85em;padding-top:.1em}
+.rg-qui{color:var(--marbre-2);font-size:.82em;display:block}
+.registre .vide{color:var(--marbre-3);font-size:.9rem}
+
+.dock{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding-top:4px}
+.dock button{display:inline-flex;align-items:center;gap:7px;background:color-mix(in srgb,var(--nuit-2) 85%,transparent);border:1px solid var(--trait);border-radius:var(--r);padding:.4em .7em;cursor:pointer;font-size:.82rem;font-weight:500;color:var(--marbre-2)}
+.dock button:hover{color:var(--marbre);border-color:var(--or-2)}
+.dock button.principal{color:var(--marbre);border-color:var(--or-2)}
+
+/* ---------- Superpositions ---------- */
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:color-mix(in srgb,var(--nuit) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.carte{width:min(620px,100%);max-height:100%;overflow:auto;background:var(--nuit-2);border:1px solid var(--trait);border-top:2px solid var(--or);border-radius:var(--r);padding:clamp(16px,3vw,28px);display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.carte.large{width:min(900px,100%)}
+.carte h2{font-family:var(--f-titre);font-size:clamp(1.3rem,3vw,1.8rem);margin:0;line-height:1.15;text-wrap:balance}
+.carte p{margin:0}
+.avert{color:var(--alerte);font-size:.9rem}
+.choix{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr));gap:8px}
+.choix button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:var(--nuit);border:1px solid var(--trait);border-radius:var(--r);padding:.6em .7em;cursor:pointer}
+.choix button:hover,.choix button:focus-visible{border-color:var(--or)}
+.choix .c-nom{font-weight:600;line-height:1.2}
+.choix .c-n{font-family:var(--f-hud);font-size:.75rem;color:var(--marbre-3);white-space:nowrap}
+.carte-pied{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;color:var(--marbre-3);font-size:.85rem}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.raccourcis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 28px}
+.raccourcis dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 12px;align-items:baseline}
+.raccourcis dt{text-align:right;white-space:nowrap}
+.raccourcis dd{margin:0;font-size:.92rem}
+.raccourcis h3{margin:6px 0 8px}
+.barre-remarque{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--nuit-2);border-top:2px solid var(--or);padding:14px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;box-shadow:0 -20px 60px rgba(0,0,0,.4)}
+.barre-remarque .ligne{justify-content:space-between}
+#f-remarque{font-size:1.15rem}
+#f-remarque.masque{-webkit-text-security:disc;letter-spacing:.12em}
+.barre-remarque.discret{border-top-color:var(--trait)}
+#f-remarque-cible{width:auto;max-width:100%}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:60;background:var(--nuit-3);border:1px solid var(--or-2);border-radius:99px;padding:.5em 1.1em;font-weight:600;font-size:.9rem;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:calc(100% - 32px);text-align:center;transition:opacity .2s}
+
+/* ---------- Compte rendu ---------- */
+.v-report{max-width:1240px;margin:0 auto;padding-block:clamp(20px,4vw,44px) 70px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.pv-tete{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 28px;align-items:end;border-bottom:1px solid var(--trait);padding-bottom:20px}
+.pv-tete h1{font-family:var(--f-titre);font-size:clamp(2rem,5vw,3.2rem);margin:0;line-height:1}
+.pv-motion{font-family:var(--f-titre);font-style:italic;font-size:clamp(1.05rem,2.2vw,1.4rem);margin:8px 0 0;max-width:60ch;text-wrap:balance}
+.pv-meta{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:10px;color:var(--marbre-2);font-size:.9rem}
+.pv-meta b{font-family:var(--f-hud);color:var(--marbre);font-weight:600}
+.pv-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
+.pv-equipes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.pv-eq{--eq:var(--gouv);border:1px solid var(--trait);border-top:3px solid var(--eq);border-radius:var(--r);background:var(--nuit-2);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.pv-eq[data-eq="O"]{--eq:var(--oppo)}
+.pv-eq h2{margin:0;font-family:var(--f-titre);color:var(--eq);font-size:1.5rem;line-height:1.1}
+.pv-eq h2 small{display:block;font-family:var(--f-hud);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--marbre-2);font-weight:500;margin-top:4px}
+.chiffres{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.chiffres div{display:flex;flex-direction:column;gap:2px}
+.chiffres b{font-family:var(--f-hud);font-size:1.45rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.chiffres span{font-size:.76rem;color:var(--marbre-2);line-height:1.25}
+.section-titre{font-family:var(--f-hud);text-transform:uppercase;letter-spacing:.18em;font-size:.8rem;color:var(--marbre-2);margin:0 0 10px;font-weight:600;display:flex;gap:12px;align-items:baseline}
+.section-titre .num{font-family:var(--f-titre);font-size:1.4rem;color:var(--or);font-style:italic;letter-spacing:0;text-transform:none}
+.table-wrap{overflow-x:auto;border:1px solid var(--trait);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
+th,td{padding:.55em .7em;text-align:left;border-bottom:1px solid var(--trait);white-space:nowrap}
+th{font-family:var(--f-hud);font-weight:600;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--marbre-2);background:var(--nuit-2);position:sticky;top:0}
+td.num,th.num{text-align:right}
+tr[data-eq="G"] td:first-child{box-shadow:inset 3px 0 0 var(--gouv)}
+tr[data-eq="O"] td:first-child{box-shadow:inset 3px 0 0 var(--oppo)}
+.st{font-family:var(--f-hud);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:.15em .55em;border-radius:99px;border:1px solid currentColor}
+.st-ok{color:var(--ok)} .st-grace{color:var(--alerte)} .st-over{color:var(--danger)} .st-off{color:var(--marbre-3)}
+.jury{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.jury-table td{white-space:normal}
+.notes{display:inline-flex;gap:4px}
+.notes button{width:2.1em;height:2.1em;border-radius:4px;border:1px solid var(--trait);background:var(--nuit);cursor:pointer;font-family:var(--f-hud);font-weight:600}
+.notes button[aria-pressed="true"]{background:var(--eq);border-color:var(--eq);color:#fff}
+.jury-table tr[data-eq="G"]{--eq:var(--gouv)} .jury-table tr[data-eq="O"]{--eq:var(--oppo)}
+.verdict{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center}
+.verdict .gagnant{font-family:var(--f-titre);font-size:1.4rem;font-weight:700}
+.onglets{display:flex;gap:4px;border-bottom:1px solid var(--trait);margin-top:-8px}
+.onglets button{background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:.65em 1.1em;font-family:var(--f-hud);text-transform:uppercase;letter-spacing:.16em;font-size:.82rem;font-weight:600;color:var(--marbre-2);cursor:pointer}
+.onglets button:hover{color:var(--marbre)}
+.onglets button[aria-selected="true"]{color:var(--marbre);border-bottom-color:var(--or)}
+.pv-panneau{display:flex;flex-direction:column;gap:28px}
+.titre-ligne{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 20px;margin-bottom:10px}
+.titre-ligne .section-titre{margin:0}
+.collectif{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.coll-eq{--eq:var(--gouv);border:1px solid var(--trait);border-top:3px solid var(--eq);border-radius:var(--r);background:var(--nuit-2);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.coll-eq[data-eq="O"]{--eq:var(--oppo)}
+.coll-eq h3{margin:0;font-family:var(--f-titre);color:var(--eq);font-size:1.35rem;line-height:1.1}
+.coll-eq h3 small{display:block;font-family:var(--f-hud);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--marbre-2);font-weight:500;margin-top:4px}
+.coll-saisie{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.coll-saisie input{width:5.5em;font-family:var(--f-hud);font-size:1.9rem;font-weight:600;text-align:center;padding:.15em .3em}
+.coll-saisie span{font-family:var(--f-hud);font-size:1.2rem;color:var(--marbre-2)}
+.lien{background:none;border:0;padding:0;color:var(--or);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:.85rem}
+.bm{display:inline-flex}
+.bm output{min-width:3.6em}
+.note-finale{font-family:var(--f-hud);font-weight:600;font-size:1.15rem}
+#pv-notes td{vertical-align:middle}
+.indiv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.indiv article{--eq:var(--gouv);border:1px solid var(--trait);border-left:3px solid var(--eq);border-radius:var(--r);background:var(--nuit-2);padding:12px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.indiv article[data-eq="O"]{--eq:var(--oppo)} .indiv article[data-eq=""]{--eq:var(--or)}
+.indiv .i-tete{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.indiv h3{margin:0;font-family:var(--f-titre);font-size:1.15rem;line-height:1.2}
+.indiv .i-note{font-family:var(--f-hud);font-weight:600;white-space:nowrap}
+.indiv .i-role{font-size:.78rem;color:var(--marbre-2)}
+.indiv ul{margin:4px 0 0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
+.indiv .vide{color:var(--marbre-3);font-size:.88rem;font-style:italic}
+.tag-cachee{font-family:var(--f-hud);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--alerte);margin-left:6px}
+.pdf-bloc{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;border:1px solid var(--or-2);border-radius:var(--r);padding:16px 18px;background:color-mix(in srgb,var(--or) 8%,var(--nuit-2))}
+.pdf-bloc>div{flex:1 1 18rem}
+.pdf-titre{margin:0;font-family:var(--f-titre);font-size:1.2rem;font-weight:700}
+.pv-remarques{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pv-remarques li{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:4px 14px;padding:8px 0;border-bottom:1px solid var(--trait)}
+.pv-remarques .cachee{font-family:var(--f-hud);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--alerte);margin-left:8px}
+details summary{cursor:pointer;font-weight:600}
+.journal td{white-space:normal}
+
+@keyframes clignote{50%{opacity:.35}}
+@keyframes halo{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.9)}}
+@keyframes arrive{from{background:color-mix(in srgb,var(--or) 25%,transparent)}to{background:transparent}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:900px){
+  .setup-grid,.equipes,.pv-equipes,.collectif,.indiv{grid-template-columns:minmax(0,1fr)}
+  .ordre-wrap{grid-template-columns:minmax(0,1fr)}
+  .ordre-wrap figure{max-width:380px}
+}
+@media (max-width:760px){
+  .v-debate{height:auto;min-height:100%;overflow:visible}
+  .fronton{grid-template-columns:1fr 1fr}
+  .fr-c{grid-column:1 / -1;order:-1}
+  .chambre{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tribune{grid-column:1 / -1;order:-1;padding-block:8px}
+  .ring-wrap{width:min(78vw,340px)}
+  .pied{grid-template-columns:minmax(0,1fr)}
+  .plan-bloc{grid-template-columns:minmax(0,190px) minmax(0,1fr)}
+  .temps-grid,.raccourcis{grid-template-columns:minmax(0,1fr)}
+  .chiffres{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .banc-score{text-align:left;white-space:normal}
+  .pv-tete{grid-template-columns:minmax(0,1fr)}
+  .pv-actions{justify-content:flex-start}
+}
+</style>
+
+<!-- ===================== PARAMÉTRAGE ===================== -->
+<section id="v-setup" class="v-setup" aria-labelledby="titre-app">
+  <div id="restore" class="restore" hidden>
+    <p><strong>Séance interrompue retrouvée.</strong> <span id="restore-info"></span></p>
+    <button type="button" id="btn-restore" class="btn btn-or">Reprendre la séance</button>
+    <button type="button" id="btn-restore-ignore" class="btn btn-ghost">Ignorer</button>
+  </div>
+
+  <header class="masthead">
+    <svg viewBox="0 0 100 60" aria-hidden="true">
+      <g fill="var(--gouv)"><circle cx="14" cy="12" r="4"/><circle cx="30" cy="12" r="4"/><circle cx="46" cy="12" r="4"/><circle cx="62" cy="12" r="4"/></g>
+      <g fill="var(--oppo)"><circle cx="14" cy="48" r="4"/><circle cx="30" cy="48" r="4"/><circle cx="46" cy="48" r="4"/><circle cx="62" cy="48" r="4"/></g>
+      <path d="M6 21 H72 M6 39 H72" stroke="var(--danger)" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>
+      <rect x="28" y="26" width="44" height="8" rx="1" fill="none" stroke="var(--marbre-3)" stroke-width="1.2"/>
+      <rect x="82" y="20" width="12" height="20" rx="2" fill="none" stroke="var(--or)" stroke-width="1.5"/>
+    </svg>
+    <div>
+      <h1 class="app-nom" id="titre-app">polem<span class="os">.os</span></h1>
+      <p class="app-sous">Chronomètre, registre et compte rendu de débat parlementaire, d'après les règles de la French Debating Association.</p>
+    </div>
+  </header>
+
+  <form id="setup-form" class="setup-grid" novalidate>
+    <fieldset class="bloc bloc-large">
+      <legend class="bloc-titre"><span class="num">I</span> La motion</legend>
+      <div class="champ">
+        <label for="f-titre">Séance</label>
+        <input type="text" id="f-titre" placeholder="Ex. 1re B · débat n° 3" autocomplete="off">
+      </div>
+      <div class="champ">
+        <label for="f-motion">Motion (la question débattue)</label>
+        <textarea id="f-motion" rows="2" placeholder="This House Would… / Cette Chambre croit que…"></textarea>
+        <p class="type-motion"><span class="chip" id="f-motion-chip">Motion</span><span class="aide" id="f-motion-type"></span></p>
+      </div>
+    </fieldset>
+
+    <fieldset class="bloc bloc-large">
+      <legend class="bloc-titre"><span class="num">II</span> Les équipes</legend>
+      <p class="note-exemple" id="note-exemple">Noms d'exemple : remplacez-les, ou collez votre liste (un nom par ligne).</p>
+      <div class="equipes" id="equipes"></div>
+      <p class="aide">Premier orateur : définit les termes et la ligne d'équipe. Whip : synthèse des points de friction, sans argument nouveau. L'ordre alterne Gouvernement puis Opposition.</p>
+    </fieldset>
+
+    <fieldset class="bloc">
+      <legend class="bloc-titre"><span class="num">III</span> Le temps</legend>
+      <div class="presets">
+        <button type="button" class="btn btn-mini" data-preset="classe">Format classe · 1:30</button>
+        <button type="button" class="btn btn-mini" data-preset="fda">Format FDA officiel · 6:00</button>
+      </div>
+      <div class="temps-grid" id="temps-grid"></div>
+    </fieldset>
+
+    <fieldset class="bloc">
+      <legend class="bloc-titre"><span class="num">IV</span> Sons, salle et enregistrement</legend>
+      <label class="switch"><input type="checkbox" id="f-sifflets"> Coups de sifflet aux signaux</label>
+      <div class="ligne">
+        <label for="f-volume" class="lbl">Volume</label>
+        <input type="range" id="f-volume" min="0" max="1" step="0.05">
+        <button type="button" class="btn btn-mini" id="btn-test-sifflet">Tester le sifflet</button>
+      </div>
+      <p class="aide">Sifflet court : fin du temps protégé, puis début de la conclusion protégée. Double : temps écoulé. Long : fin du temps de grâce, puis un rappel toutes les 20 s.</p>
+      <label class="switch"><input type="checkbox" id="f-audio"> Enregistrer l'audio, un fichier par orateur</label>
+      <div class="ligne"><span class="vu" aria-hidden="true"><i id="vu"></i></span><span class="statut-micro" id="statut-micro">Micro non activé.</span></div>
+      <label class="switch"><input type="checkbox" id="f-salle"> Salle éclairée (fond clair pour vidéoprojecteur)</label>
+      <label class="switch"><input type="checkbox" id="f-cachee-defaut"> Mode remarque cachée : la saisie s'affiche en points, le texte n'apparaît qu'au compte rendu</label>
+    </fieldset>
+
+    <section class="bloc bloc-large" aria-labelledby="titre-ordre">
+      <h2 class="bloc-titre" id="titre-ordre"><span class="num">V</span> Ordre de passage</h2>
+      <div class="ordre-wrap">
+        <figure>
+          <svg id="plan-setup" class="plan" viewBox="0 0 360 150" role="img" aria-label="Plan de la chambre et ordre de passage"></svg>
+          <figcaption class="aide">Deux bancs face à face, comme aux Communes : le Gouvernement à la droite du Speaker, les lignes rouges au sol à deux longueurs d'épée. Les numéros donnent l'ordre de passage.</figcaption>
+        </figure>
+        <div class="champ">
+          <p class="ordre-resume" id="ordre-resume"></p>
+          <ol class="ordre-liste" id="ordre-liste"></ol>
+        </div>
+      </div>
+      <div class="lancement">
+        <button type="submit" class="btn btn-or btn-ouvrir" id="btn-ouvrir">Ouvrir la séance</button>
+        <p class="aide">Le chrono de compétition (T+) démarre à l'ouverture. Ensuite : <kbd>Espace</kbd> lance le chrono de l'orateur, <kbd>Entrée</kbd> passe la parole, <kbd>Maj</kbd>+<kbd>⌫</kbd> revient en arrière, <kbd>?</kbd> affiche tous les raccourcis.</p>
+      </div>
+    </section>
+  </form>
+</section>
+
+<!-- ===================== SÉANCE ===================== -->
+<section id="v-debate" class="v-debate" hidden aria-label="Séance en cours">
+  <header class="fronton">
+    <div class="fr-g">
+      <span class="hud" id="d-titre">Séance</span>
+      <span class="horloge" id="d-clock">T+00:00:00</span>
+    </div>
+    <div class="fr-c">
+      <span class="hud">Motion</span>
+      <p class="motion" id="d-motion"></p>
+    </div>
+    <div class="fr-d">
+      <span class="hud" id="d-progress"></span>
+      <div class="pastilles">
+        <span class="pastille rec" id="d-rec" hidden>Enregistrement</span>
+        <span class="pastille" id="d-mute" hidden>Sifflets coupés</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="chambre">
+    <aside class="banc banc-g" id="banc-G">
+      <div class="banc-tete">
+        <h2 class="banc-cote">Gouvernement<span class="banc-equipe" id="d-eq-G"></span></h2>
+        <span class="banc-score" id="d-score-G"></span>
+      </div>
+      <ol class="banc-liste" id="d-liste-G"></ol>
+    </aside>
+
+    <div class="tribune" id="tribune">
+      <p class="appel" id="d-appel">À la tribune</p>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 240 240" aria-hidden="true">
+          <g transform="rotate(-90 120 120)">
+            <circle class="ring-ticks" id="ring-ticks" cx="120" cy="120" r="117"/>
+            <circle class="ring-track" cx="120" cy="120" r="100"/>
+            <circle class="ring-prot" id="ring-prot1" cx="120" cy="120" r="100"/>
+            <circle class="ring-prot" id="ring-prot2" cx="120" cy="120" r="100"/>
+            <circle class="ring-prog" id="ring-prog" cx="120" cy="120" r="100"/>
+            <circle class="ring-grace" id="ring-grace" cx="120" cy="120" r="110"/>
+            <circle class="ring-poi" id="ring-poi" cx="120" cy="120" r="88"/>
+          </g>
+        </svg>
+        <div class="ring-centre">
+          <p class="phase" id="d-phase"></p>
+          <p class="temps" id="d-temps" aria-live="off"></p>
+          <p class="sous-temps" id="d-sous"></p>
+        </div>
+      </div>
+      <h2 class="nom-orateur" id="d-nom"></h2>
+      <div class="poi-ligne" id="d-poi"></div>
+      <div class="poi-banniere" id="d-poi-banniere" hidden>
+        <span class="hud">Point d'information <span id="d-poi-reste"></span></span>
+        <p class="poi-qui" id="d-poi-qui"></p>
+        <div class="poi-barre"><i id="d-poi-barre"></i></div>
+      </div>
+      <div class="voile" id="d-voile" hidden></div>
+    </div>
+
+    <aside class="banc banc-o" id="banc-O">
+      <div class="banc-tete">
+        <h2 class="banc-cote">Opposition<span class="banc-equipe" id="d-eq-O"></span></h2>
+        <span class="banc-score" id="d-score-O"></span>
+      </div>
+      <ol class="banc-liste" id="d-liste-O"></ol>
+    </aside>
+  </main>
+
+  <footer class="pied" id="d-pied">
+    <div class="plan-bloc">
+      <svg id="plan-debate" class="plan" viewBox="0 0 360 150" role="img" aria-label="Plan de la chambre et ordre de passage"></svg>
+      <p class="suivant" id="d-suivant"></p>
+    </div>
+    <div class="registre" id="d-registre">
+      <div class="registre-tete"><span class="hud">Registre des remarques</span><span class="hud" id="d-registre-n"></span></div>
+      <ol id="d-remarques"></ol>
+    </div>
+  </footer>
+
+  <nav class="dock" id="dock" aria-label="Commandes de séance">
+    <button type="button" data-act="chrono" class="principal"><kbd>Espace</kbd><span id="dock-chrono">Lancer</span></button>
+    <button type="button" data-act="suivant" class="principal"><kbd>Entrée</kbd>Orateur suivant</button>
+    <button type="button" data-act="annuler"><kbd>Maj+⌫</kbd>Revenir</button>
+    <button type="button" data-act="poi"><kbd>P</kbd>POI accepté</button>
+    <button type="button" data-act="refus"><kbd>R</kbd>POI refusé</button>
+    <button type="button" data-act="remarque"><kbd>C</kbd>Remarque</button>
+    <button type="button" data-act="sifflet"><kbd>S</kbd>Sifflet</button>
+    <button type="button" data-act="aide"><kbd>?</kbd>Raccourcis</button>
+    <button type="button" data-act="bilan"><kbd>B</kbd>Compte rendu</button>
+  </nav>
+</section>
+
+<!-- ===================== PROCÈS-VERBAL ===================== -->
+<section id="v-report" class="v-report" hidden aria-labelledby="pv-titre">
+  <header class="pv-tete">
+    <div>
+      <span class="hud" id="pv-seance">Séance</span>
+      <h1 id="pv-titre">Compte rendu</h1>
+      <p class="pv-motion" id="pv-motion"></p>
+      <div class="pv-meta" id="pv-meta"></div>
+    </div>
+    <div class="pv-actions">
+      <button type="button" class="btn btn-or" id="btn-xlsx">Télécharger le bilan Excel</button>
+      <button type="button" class="btn" data-pdf>PDF des remarques et des notes</button>
+      <button type="button" class="btn" id="btn-zip" hidden>Télécharger l'audio (.zip)</button>
+      <button type="button" class="btn btn-ghost" id="btn-retour-seance">Revenir à la séance</button>
+      <button type="button" class="btn btn-ghost" id="btn-nouvelle">Nouvelle séance</button>
+    </div>
+  </header>
+  <div class="onglets" role="tablist" aria-label="Compte rendu">
+    <button type="button" role="tab" id="tab-seance" aria-controls="pan-seance" aria-selected="true">Séance</button>
+    <button type="button" role="tab" id="tab-notation" aria-controls="pan-notation" aria-selected="false" tabindex="-1">Notation</button>
+  </div>
+
+  <div class="pv-panneau" id="pan-seance" role="tabpanel" aria-labelledby="tab-seance">
+    <div class="pv-equipes" id="pv-equipes"></div>
+    <section>
+      <h2 class="section-titre"><span class="num">I</span> Les orateurs</h2>
+      <div class="table-wrap"><table id="pv-orateurs"></table></div>
+    </section>
+    <section>
+      <h2 class="section-titre"><span class="num">II</span> Registre des remarques</h2>
+      <ol class="pv-remarques" id="pv-remarques"></ol>
+    </section>
+    <section>
+      <details>
+        <summary>Journal complet de la séance</summary>
+        <div class="table-wrap" style="margin-top:10px"><table class="journal" id="pv-journal"></table></div>
+      </details>
+    </section>
+  </div>
+
+  <div class="pv-panneau" id="pan-notation" role="tabpanel" aria-labelledby="tab-notation" hidden>
+    <section>
+      <h2 class="section-titre"><span class="num">I</span> Grille du jury · cinq critères FDA notés de 1 à 5</h2>
+      <div class="jury" id="pv-jury"></div>
+    </section>
+    <section>
+      <div class="titre-ligne">
+        <h2 class="section-titre"><span class="num">II</span> Note collective par équipe</h2>
+        <label class="lbl" for="f-sur">Barème <select id="f-sur" style="width:auto"><option value="20">sur 20</option><option value="10">sur 10</option></select></label>
+      </div>
+      <div class="collectif" id="pv-collectif"></div>
+    </section>
+    <section>
+      <h2 class="section-titre"><span class="num">III</span> Bonus et malus individuels</h2>
+      <div class="table-wrap"><table id="pv-notes"></table></div>
+      <p class="aide" style="margin-top:8px">Note finale = note collective de l'équipe + bonus ou malus, bornée entre 0 et le barème. Pas de 0,5 point.</p>
+    </section>
+    <section>
+      <h2 class="section-titre"><span class="num">IV</span> Remarques individuelles</h2>
+      <div class="indiv" id="pv-indiv"></div>
+    </section>
+    <section class="pdf-bloc">
+      <div>
+        <p class="pdf-titre">PDF des remarques et des notes</p>
+        <p class="aide">Compact, noir et blanc, Times 12, sans horodatage : nom et note en gras, bonus ou malus en italique, puis les remarques.</p>
+      </div>
+      <label class="switch"><input type="checkbox" id="f-pdf-cachees"> Inclure les remarques cachées</label>
+      <label class="switch"><input type="checkbox" id="f-pdf-page"> Fiches à découper, une par élève</label>
+      <button type="button" class="btn btn-or" data-pdf>Générer le PDF</button>
+    </section>
+  </div>
+</section>
+
+<!-- ===================== SUPERPOSITIONS ===================== -->
+<div class="modal" id="modal" hidden><div class="carte" id="modal-carte" role="dialog" aria-modal="true"></div></div>
+<div class="barre-remarque" id="barre-remarque" hidden>
+  <div class="ligne">
+    <span class="hud">Note du professeur <span id="remarque-t"></span></span>
+    <label class="lbl" for="f-remarque-cible">À propos de <select id="f-remarque-cible"></select></label>
+  </div>
+  <label class="sr" for="f-remarque">Texte de la remarque</label>
+  <input type="text" id="f-remarque" autocomplete="off" spellcheck="false" placeholder="Votre remarque…">
+  <div class="ligne">
+    <label class="switch"><input type="checkbox" id="f-cachee"> Cachée : saisie en points, lisible seulement au compte rendu</label>
+    <span class="aide"><kbd>Entrée</kbd> inscrire · <kbd>Échap</kbd> annuler</span>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.6/fix-webm-duration.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* ============================================================
+   Utilitaires
+   ============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const mmss = sec => { sec = Math.max(0, Math.round(sec)); return `${Math.floor(sec / 60)}:${pad(sec % 60)}`; };
+const hms = ms => { const s = Math.floor(Math.max(0, ms) / 1000); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
+const tplus = ms => { const s = Math.floor(Math.max(0, ms) / 1000), h = Math.floor(s / 3600); return 'T+' + (h ? h + ':' : '') + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); };
+const duree = ms => { const s = Math.round(ms / 1000); return s < 60 ? `${s} s` : mmss(s); };
+const heure = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+const sansAccents = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+const slug = s => sansAccents(String(s)).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'x';
+const nomCourt = n => { const p = String(n).trim().split(/\s+/); return p.length > 1 ? `${p[0]} ${p[p.length - 1][0]}.` : p[0]; };
+
+const COTE = { G: 'Gouvernement', O: 'Opposition' };
+const ADV = { G: 'O', O: 'G' };
+const CRITERES = [
+  ['Arguments', 'Charge de la preuve, clarté, pertinence, diversité'],
+  ['Forme', 'Structure, style, gestion du temps'],
+  ['Travail d’équipe', 'Respect des rôles, esprit d’équipe, cohérence'],
+  ['Engagement', 'Réfutations, POI, adaptation'],
+  ['Star quality', 'Paraverbal, non-verbal, charme : le « je ne sais quoi »'],
+];
+const LIB = {
+  ouverture: 'Ouverture de la séance', appel: 'Appel à la tribune', debut: 'Prise de parole',
+  pause: 'Suspension du chrono', reprise: 'Reprise du chrono', reglement: 'Rappel au règlement',
+  poi: 'POI accepté', refus: 'POI refusé', poi_annule: 'POI annulé', ajust: 'Ajustement du temps',
+  signal: 'Signal', fin: 'Fin de l’intervention', absent: 'Orateur absent', retour: 'Retour à l’orateur précédent',
+  recommence: 'Intervention recommencée', remarque: 'Remarque du professeur', remarque_cachee: 'Remarque cachée', annulation: 'Changement d’orateur annulé',
+  cloture: 'Clôture des débats', sifflet: 'Coup de sifflet', restauration: 'Séance restaurée',
+};
+
+const EXEMPLE = {
+  G: ['Inès Morel', 'Hugo Lambert', 'Léa Fontaine', 'Malik Benali', 'Zoé Garnier'],
+  O: ['Noé Girard', 'Camille Rousseau', 'Adam Chevalier', 'Jade Mercier', 'Sacha Perrin'],
+};
+const cfgDefaut = () => ({
+  titre: '', motion: 'This House Would make philosophy compulsory from middle school.',
+  equipes: { G: { nom: '', membres: [...EXEMPLE.G] }, O: { nom: '', membres: [...EXEMPLE.O] } },
+  tParole: 90, tProtege: 15, tGrace: 15, poiMax: 2, poiBonus: 15, poiDuree: 15,
+  sifflets: true, volume: 0.7, audio: false, salle: 'nuit', remarqueCachee: false, exemple: true,
+});
+const juryDefaut = () => ({ G: [0, 0, 0, 0, 0], O: [0, 0, 0, 0, 0], departage: '', meilleur: '' });
+const notationDefaut = () => ({ sur: 20, coll: { G: null, O: null }, bonus: {}, pdfCachees: true, pdfPage: false });
+
+/* Stockage local (confort : se souvenir des équipes, survivre à un rechargement) */
+const LS = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* rien */ } },
+};
+const K_CFG = 'polemos.cfg.v1', K_SEANCE = 'polemos.seance.v1';
+
+/* ============================================================
+   État
+   ============================================================ */
+let S = {
+  phase: 'setup', cfg: cfgDefaut(), ordre: [], seance: null, cur: 0, etat: 'pret',
+  speeches: [], events: [], comments: [], poiActif: null, motifPause: '',
+  jury: juryDefaut(), notation: notationDefaut(), ui: { registre: true, dock: true },
+};
+const UI = { overlay: null, dernierAvance: 0, dernierSave: 0, toastT: null };
+
+const rel = () => (S.seance ? Date.now() - S.seance.t0 : 0);
+const spCourant = () => S.speeches[S.cur];
+const oCourant = () => S.ordre[S.cur];
+const ecoule = sp => !sp ? 0 : sp.acc + (sp.runStart != null ? Date.now() - sp.runStart : 0);
+const ms = s => s * 1000;
+const orateur = id => S.ordre.find(o => o.id === id);
+const nomEquipe = eq => { const n = (S.cfg.equipes[eq].nom || '').trim(); return n ? `${COTE[eq]} · ${n}` : COTE[eq]; };
+
+function sauver() {
+  S.dernierSave = Date.now();
+  if (S.phase === 'setup') return;
+  LS.set(K_SEANCE, { ...S, savedAt: Date.now() });
+}
+
+function log(type, detail = '', orateurId) {
+  const id = orateurId !== undefined ? orateurId : (S.etat !== 'fini' && oCourant() ? oCourant().id : null);
+  S.events.push({ t: rel(), ts: Date.now(), type, detail, orateur: id });
+  sauver();
+}
+
+/* ============================================================
+   Sons : sifflet synthétisé (Web Audio)
+   ============================================================ */
+const Son = {
+  ctx: null, bruit: null,
+  get() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { this.ctx = new AC(); } catch (e) { return null; }
+    }
+    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    return this.ctx;
+  },
+  tamponBruit(ctx) {
+    if (this.bruit) return this.bruit;
+    const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return (this.bruit = b);
+  },
+  souffle(t0, dur, freq = 2850, vol = 1, roulement = true) {
+    const ctx = this.ctx;
+    const sortie = ctx.createGain(); sortie.gain.value = clamp(S.cfg.volume, 0, 1); sortie.connect(ctx.destination);
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.exponentialRampToValueAtTime(0.42 * vol, t0 + 0.018);
+    env.gain.setValueAtTime(0.42 * vol, Math.max(t0 + 0.02, t0 + dur - 0.045));
+    env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    env.connect(sortie);
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(freq * 0.94, t0);
+    o.frequency.exponentialRampToValueAtTime(freq, t0 + 0.035);
+    const am = ctx.createGain(); am.gain.value = roulement ? 0.7 : 1;
+    o.connect(am); am.connect(env);
+    const h = ctx.createOscillator(); h.type = 'sine'; h.frequency.setValueAtTime(freq * 2.01, t0);
+    const hg = ctx.createGain(); hg.gain.value = 0.06; h.connect(hg); hg.connect(env);
+    if (roulement) { // le « grelot » du sifflet à bille
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 27;
+      const lfoF = ctx.createGain(); lfoF.gain.value = freq * 0.05; lfo.connect(lfoF); lfoF.connect(o.frequency);
+      const lfoA = ctx.createGain(); lfoA.gain.value = 0.3; lfo.connect(lfoA); lfoA.connect(am.gain);
+      lfo.start(t0); lfo.stop(t0 + dur + 0.05);
+    }
+    const n = ctx.createBufferSource(); n.buffer = this.tamponBruit(ctx);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 5;
+    const ng = ctx.createGain(); ng.gain.value = 0.22; n.connect(bp); bp.connect(ng); ng.connect(env);
+    o.start(t0); h.start(t0); n.start(t0);
+    o.stop(t0 + dur + 0.05); h.stop(t0 + dur + 0.05); n.stop(t0 + dur + 0.05);
+  },
+  jouer(motif, force = false) {
+    if (!S.cfg.sifflets && !force) return;
+    const ctx = this.get(); if (!ctx) return;
+    const t = ctx.currentTime + 0.03;
+    switch (motif) {
+      case 'court': this.souffle(t, 0.24); break;
+      case 'tweet': this.souffle(t, 0.09, 3300, 0.6, false); break;
+      case 'poi': this.souffle(t, 0.08, 3000, 0.6, false); this.souffle(t + 0.12, 0.1, 3500, 0.6, false); break;
+      case 'appel': this.souffle(t, 0.12, 2950, 0.85); this.souffle(t + 0.2, 0.12, 2950, 0.85); break;
+      case 'double': this.souffle(t, 0.3); this.souffle(t + 0.42, 0.3); break;
+      case 'long': this.souffle(t, 0.16); this.souffle(t + 0.26, 0.16); this.souffle(t + 0.52, 0.95); break;
+      case 'ouverture': this.souffle(t, 0.14, 2600); this.souffle(t + 0.22, 0.42, 3150); break;
+      case 'cloture': this.souffle(t, 0.3, 3100); this.souffle(t + 0.42, 0.3, 2800); this.souffle(t + 0.84, 0.8, 2600); break;
+      default: this.souffle(t, 0.35);
+    }
+  },
+};
+
+/* ============================================================
+   Enregistrement audio (MediaRecorder) : un fichier par orateur + la séance entière
+   ============================================================ */
+const Rec = {
+  stream: null, mime: '', ext: 'webm', full: null, seg: null, fichiers: [], actif: false, analyseur: null,
+  supporte() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); },
+  async ouvrirMicro() {
+    if (this.stream) return true;
+    if (!this.supporte()) return false;
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+    } catch (e) { return false; }
+    const c = [['audio/webm;codecs=opus', 'webm'], ['audio/ogg;codecs=opus', 'ogg'], ['audio/mp4', 'm4a'], ['audio/webm', 'webm']];
+    this.mime = ''; this.ext = 'webm';
+    for (const [m, x] of c) { try { if (MediaRecorder.isTypeSupported(m)) { this.mime = m; this.ext = x; break; } } catch (e) { /* suivant */ } }
+    const ctx = Son.get();
+    if (ctx) { try { const src = ctx.createMediaStreamSource(this.stream); this.analyseur = ctx.createAnalyser(); this.analyseur.fftSize = 512; src.connect(this.analyseur); } catch (e) { this.analyseur = null; } }
+    return true;
+  },
+  niveau() {
+    if (!this.analyseur) return 0;
+    const d = new Uint8Array(this.analyseur.fftSize); this.analyseur.getByteTimeDomainData(d);
+    let m = 0; for (const v of d) m = Math.max(m, Math.abs(v - 128)); return m / 128;
+  },
+  nouveau() {
+    const opts = this.mime ? { mimeType: this.mime, audioBitsPerSecond: 64000 } : undefined;
+    const r = new MediaRecorder(this.stream, opts), chunks = [];
+    r.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    r.start(1000);
+    return { r, chunks, t0: Date.now() };
+  },
+  demarrerSeance() {
+    if (!this.stream) return;
+    this.fichiers = []; this.actif = true;
+    try { this.full = { ...this.nouveau(), nom: '00_seance-complete', debut: rel() }; } catch (e) { this.actif = false; }
+  },
+  debutSegment(nom, meta) {
+    if (!this.actif) return;
+    this.finSegment(true);
+    try { this.seg = { ...this.nouveau(), nom, meta: { ...meta, debut: rel() } }; } catch (e) { this.seg = null; }
+  },
+  arreterEnreg(s, garder) {
+    return new Promise(res => {
+      if (!s) return res();
+      s.r.onstop = async () => {
+        if (garder && s.chunks.length) {
+          const fin = rel();
+          let blob = new Blob(s.chunks, { type: (this.mime || 'audio/webm').split(';')[0] });
+          // MediaRecorder n'écrit pas la durée dans les .webm : on la renseigne pour que les lecteurs puissent avancer dans le fichier
+          if (this.ext === 'webm' && typeof window.ysFixWebmDuration === 'function') {
+            try { blob = await window.ysFixWebmDuration(blob, Date.now() - s.t0, { logger: false }); } catch (e) { /* fichier gardé tel quel */ }
+          }
+          this.fichiers.push({ nom: `${s.nom}.${this.ext}`, blob, meta: { ...(s.meta || {}), fin } });
+        }
+        res();
+      };
+      try { if (s.r.state !== 'inactive') s.r.stop(); else res(); } catch (e) { res(); }
+    });
+  },
+  finSegment(garder = true) { const s = this.seg; this.seg = null; return this.arreterEnreg(s, garder); },
+  async arreter() {
+    await this.finSegment(true);
+    const f = this.full; this.full = null;
+    if (f) { f.meta = { debut: f.debut }; await this.arreterEnreg(f, true); }
+    this.actif = false;
+    if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; this.analyseur = null; }
+    this.fichiers.sort((a, b) => (a.nom < b.nom ? -1 : a.nom > b.nom ? 1 : 0));
+  },
+};
+
+function nomFichierAudio(i, suffixe = '') {
+  const o = S.ordre[i];
+  return `${pad(i + 1)}_${slug(COTE[o.equipe])}_${slug(o.role)}_${slug(o.nom)}${suffixe ? '_' + suffixe : ''}`;
+}
+
+/* ============================================================
+   Téléchargement : capacité de l'artefact si présente, sinon lien classique
+   ============================================================ */
+const dlPromesse = (window.claude && typeof window.claude.use === 'function')
+  ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function offrirFichier(nom, blob) {
+  const dl = await Promise.race([dlPromesse, new Promise(r => setTimeout(() => r(null), 1500))]);
+  if (dl) {
+    try { await dl.save({ filename: nom, data: blob }); toast('Fichier enregistré'); return; }
+    catch (e) {
+      if (e && e.code === 'declined') { toast('Téléchargement annulé'); return; }
+      if (e && e.code === 'rate_limited') { toast('Une demande est déjà ouverte, réessayez dans un instant'); return; }
+    }
+  }
+  if (window.claude && typeof window.claude.use === 'function' && window.top !== window.self) {
+    toast('Téléchargement indisponible dans cette vue : ouvrez le fichier .html dans un navigateur');
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = nom; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 4000);
+}
+
+/* ============================================================
+   Ordre de passage
+   ============================================================ */
+function roleDe(eq, i, n) {
+  if (i === 0) return eq === 'G' ? 'Premier ministre' : 'Chef de l’opposition';
+  if (i === n - 1) return 'Whip';
+  return `${i + 1}e orateur`;
+}
+function construireOrdre(cfg) {
+  const G = cfg.equipes.G.membres, O = cfg.equipes.O.membres, res = [];
+  const mk = (eq, i, arr) => ({ id: eq + (i + 1), equipe: eq, rang: i, nom: (arr[i] || '').trim() || `${COTE[eq]} ${i + 1}`, role: roleDe(eq, i, arr.length) });
+  for (let i = 0; i < Math.max(G.length, O.length); i++) {
+    if (i < G.length) res.push(mk('G', i, G));
+    if (i < O.length) res.push(mk('O', i, O));
+  }
+  return res;
+}
+
+/* Plan de la chambre : deux bancs face à face (Gouvernement en haut, à la droite du Speaker),
+   table et boîtes de dépêche au centre, lignes rouges au sol, fauteuil du Speaker au bout. */
+function dessinerChambre(svg, ordre, etatDe) {
+  const x0 = 30, x1 = 280, yG = 26, yO = 124;
+  const n = Math.max(1, ...['G', 'O'].map(eq => ordre.filter(o => o.equipe === eq).length));
+  const pas = n > 1 ? (x1 - x0) / (n - 1) : 0, rs = n > 8 ? 10.5 : 12;
+  let h = `<title>Plan de la chambre</title>`;
+  h += `<rect class="banquette eq-G" x="${x0 - 18}" y="${yG - 17}" width="${x1 - x0 + 36}" height="34" rx="9"/>`;
+  h += `<rect class="banquette eq-O" x="${x0 - 18}" y="${yO - 17}" width="${x1 - x0 + 36}" height="34" rx="9"/>`;
+  h += `<g><title>Lignes rouges : deux longueurs d'épée entre les bancs</title><line class="ligne-rouge" x1="${x0 - 18}" y1="${yG + 25}" x2="${x1 + 18}" y2="${yG + 25}"/><line class="ligne-rouge" x1="${x0 - 18}" y1="${yO - 25}" x2="${x1 + 18}" y2="${yO - 25}"/></g>`;
+  h += `<g><title>Table de la Chambre et boîtes de dépêche</title><rect class="table-chambre" x="150" y="66" width="140" height="18" rx="2"/><rect class="boite" x="262" y="61" width="20" height="5" rx="1"/><rect class="boite" x="262" y="84" width="20" height="5" rx="1"/></g>`;
+  h += `<g><title>Fauteuil du Speaker (président de séance)</title><rect class="fauteuil" x="318" y="58" width="26" height="34" rx="4"/><path class="fauteuil" d="M318 66 H312 V84 H318" fill="none"/></g>`;
+  h += `<g><title>Barre de la Chambre</title><line class="barre-chambre" x1="6" y1="62" x2="6" y2="88"/></g>`;
+  ordre.forEach((o, i) => {
+    const x = (x0 + o.rang * pas).toFixed(1), y = o.equipe === 'G' ? yG : yO;
+    const st = etatDe ? etatDe(i) : '';
+    h += `<g class="siege eq-${o.equipe} ${st}"><title>${esc(`${i + 1}. ${o.nom} · ${o.role} (${COTE[o.equipe]})`)}</title>`
+      + (st === 'courant' ? `<circle class="halo" cx="${x}" cy="${y}" r="${rs}"/>` : '')
+      + `<circle cx="${x}" cy="${y}" r="${rs}"/><text x="${x}" y="${y}">${i + 1}</text></g>`;
+  });
+  svg.innerHTML = h;
+}
+
+/* ============================================================
+   PARAMÉTRAGE
+   ============================================================ */
+const CHAMPS_TEMPS = [
+  { k: 'tParole', lbl: 'Temps de parole par orateur', pas: 15, min: 15, max: 1200, aide: 'FDA officiel : 6:00.' },
+  { k: 'tProtege', lbl: 'Temps protégé, au début et à la fin', pas: 5, min: 0, max: 300, aide: 'Aucun POI pendant ce temps. FDA : 1:00 sur 6:00.' },
+  { k: 'tGrace', lbl: 'Temps de grâce', pas: 5, min: 0, max: 120, aide: 'Toléré après le temps imparti (FDA : 15 s).' },
+  { k: 'poiMax', lbl: 'POI attendus par intervention', pas: 1, min: 0, max: 8, nombre: true, aide: 'La FDA demande d’en accepter au moins 1 et en recommande 2.' },
+  { k: 'poiBonus', lbl: 'Temps ajouté par POI accepté', pas: 5, min: 0, max: 60, aide: '0:00 = règle FDA stricte (le POI est pris sur le temps de l’orateur).' },
+  { k: 'poiDuree', lbl: 'Durée maximale d’un POI', pas: 5, min: 5, max: 60, aide: 'Compte à rebours à l’écran, petit sifflet à la fin.' },
+];
+
+function lireTemps(v, k) {
+  v = String(v).trim().replace(',', ':').replace('.', ':');
+  let m = /^(\d{1,3}):(\d{1,2})$/.exec(v);
+  if (m) return (+m[1]) * 60 + (+m[2]);
+  m = /^(\d{1,4})$/.exec(v);
+  if (m) { const n = +m[1]; return (k === 'tParole' && n <= 20) ? n * 60 : n; }
+  return null;
+}
+function bornerTemps() {
+  const c = S.cfg;
+  c.tParole = clamp(c.tParole, 15, 1200);
+  c.tProtege = clamp(c.tProtege, 0, Math.max(0, Math.floor((c.tParole - 5) / 2)));
+  c.tGrace = clamp(c.tGrace, 0, 120);
+  c.poiMax = clamp(c.poiMax, 0, 8);
+  c.poiBonus = clamp(c.poiBonus, 0, 60);
+  c.poiDuree = clamp(c.poiDuree, 5, 60);
+}
+
+function rendreTempsGrid() {
+  $('#temps-grid').innerHTML = CHAMPS_TEMPS.map(f => `
+    <div class="champ">
+      <span class="lbl" id="l-${f.k}">${esc(f.lbl)}</span>
+      <div class="stepper"><button type="button" data-t="${f.k}" data-d="-1" aria-label="Diminuer">−</button><input type="text" id="f-${f.k}" inputmode="numeric" aria-labelledby="l-${f.k}" autocomplete="off"><button type="button" data-t="${f.k}" data-d="1" aria-label="Augmenter">+</button></div>
+      <p class="aide">${esc(f.aide)}</p>
+    </div>`).join('');
+}
+function majTempsChamps() {
+  for (const f of CHAMPS_TEMPS) { const i = $('#f-' + f.k); if (i && document.activeElement !== i) i.value = f.nombre ? String(S.cfg[f.k]) : mmss(S.cfg[f.k]); }
+}
+
+function rendreEquipes() {
+  $('#equipes').innerHTML = ['G', 'O'].map(eq => {
+    const e = S.cfg.equipes[eq], n = e.membres.length;
+    return `<div class="equipe" data-eq="${eq}">
+      <div class="eq-tete"><span class="eq-cote">${COTE[eq]}</span><span class="hud">${eq === 'G' ? 'Proposition' : 'Opposition'}</span></div>
+      <label class="sr" for="f-nom-${eq}">Nom de l'équipe ${COTE[eq]}</label>
+      <input type="text" id="f-nom-${eq}" data-nom-eq="${eq}" placeholder="Nom de l'équipe (facultatif)" value="${esc(e.nom)}" autocomplete="off">
+      <div class="eq-outils">
+        <div class="stepper" role="group" aria-label="Nombre de débatteurs"><button type="button" data-n="${eq}" data-d="-1" aria-label="Un débatteur de moins">−</button><output id="f-n-${eq}">${n}</output><button type="button" data-n="${eq}" data-d="1" aria-label="Un débatteur de plus">+</button></div>
+        <span class="aide">débatteurs (3 à 10)</span>
+        <button type="button" class="btn btn-mini" data-coller="${eq}">Coller une liste</button>
+        <button type="button" class="btn btn-mini" data-melanger="${eq}">Mélanger</button>
+      </div>
+      <div class="coller" id="coller-${eq}" hidden>
+        <label class="sr" for="f-coller-${eq}">Liste de noms</label>
+        <textarea id="f-coller-${eq}" rows="5" placeholder="Un nom par ligne (ou séparés par des virgules)"></textarea>
+        <div class="ligne"><button type="button" class="btn btn-mini btn-or" data-coller-ok="${eq}">Remplacer la liste</button><button type="button" class="btn btn-mini btn-ghost" data-coller="${eq}">Fermer</button></div>
+      </div>
+      <ol class="eq-liste">${e.membres.map((m, i) => `
+        <li><span class="eq-rang">${i + 1}</span>
+          <span class="eq-champ"><label class="eq-role" for="f-${eq}-${i}">${esc(roleDe(eq, i, n))}</label>
+          <input type="text" id="f-${eq}-${i}" data-eq="${eq}" data-i="${i}" value="${esc(m)}" placeholder="Nom de l'orateur" autocomplete="off"></span>
+          <span class="eq-move"><button type="button" data-up="${eq}" data-i="${i}" aria-label="Monter" ${i === 0 ? 'disabled' : ''}>↑</button><button type="button" data-down="${eq}" data-i="${i}" aria-label="Descendre" ${i === n - 1 ? 'disabled' : ''}>↓</button></span>
+        </li>`).join('')}
+      </ol>
+    </div>`;
+  }).join('');
+}
+
+function typeMotion(m) {
+  const t = m.trim();
+  if (/^(THW\b|this house would|cette (chambre|assembl[ée]e) (ferait|voudrait|devrait))/i.test(t)) return ['Motion d’action', 'Le Gouvernement propose un modèle : le « comment ».'];
+  if (/^(THB\b|THBT\b|this house believes|cette (chambre|assembl[ée]e) (croit|pense|estime))/i.test(t)) return ['Motion d’analyse', 'Le Gouvernement démontre le « pourquoi ».'];
+  return ['Motion', 'Forme FDA : « This House Would… » (action) ou « This House Believes… » (analyse).'];
+}
+
+function rendreOrdre() {
+  const ordre = construireOrdre(S.cfg);
+  dessinerChambre($('#plan-setup'), ordre);
+  $('#ordre-liste').innerHTML = ordre.map((o, i) => `<li data-eq="${o.equipe}"><span class="n">${pad(i + 1)}</span><span><span class="o-nom">${esc(o.nom)}</span><span class="o-role">${esc(o.role)} · ${COTE[o.equipe]}</span></span></li>`).join('');
+  const total = ordre.length * S.cfg.tParole;
+  $('#ordre-resume').textContent = `${ordre.length} interventions de ${mmss(S.cfg.tParole)} : ${Math.round(total / 60)} min de parole, hors POI et transitions.`;
+  const [lib, aide] = typeMotion(S.cfg.motion);
+  $('#f-motion-chip').textContent = lib; $('#f-motion-type').textContent = aide;
+  $('#note-exemple').hidden = !S.cfg.exemple;
+}
+
+function rendreSetup() {
+  $('#f-titre').value = S.cfg.titre;
+  $('#f-motion').value = S.cfg.motion;
+  $('#f-sifflets').checked = S.cfg.sifflets;
+  $('#f-volume').value = S.cfg.volume;
+  $('#f-audio').checked = !!(S.cfg.audio && Rec.stream);
+  $('#f-salle').checked = S.cfg.salle === 'jour';
+  $('#f-cachee-defaut').checked = !!S.cfg.remarqueCachee;
+  rendreEquipes(); majTempsChamps(); rendreOrdre();
+}
+
+function sauverCfg() { LS.set(K_CFG, S.cfg); }
+
+function brancherSetup() {
+  rendreTempsGrid();
+  const form = $('#setup-form');
+  form.addEventListener('submit', e => { e.preventDefault(); ouvrirSeance(); });
+  $('#f-titre').addEventListener('input', e => { S.cfg.titre = e.target.value; sauverCfg(); });
+  $('#f-motion').addEventListener('input', e => { S.cfg.motion = e.target.value; rendreOrdre(); sauverCfg(); });
+  $('#f-sifflets').addEventListener('change', e => { S.cfg.sifflets = e.target.checked; sauverCfg(); });
+  $('#f-volume').addEventListener('input', e => { S.cfg.volume = +e.target.value; sauverCfg(); });
+  $('#btn-test-sifflet').addEventListener('click', () => Son.jouer('double', true));
+  $('#f-salle').addEventListener('change', e => { S.cfg.salle = e.target.checked ? 'jour' : 'nuit'; appliquerSalle(); sauverCfg(); });
+  $('#f-cachee-defaut').addEventListener('change', e => { S.cfg.remarqueCachee = e.target.checked; sauverCfg(); });
+  $('#f-audio').addEventListener('change', async e => {
+    const st = $('#statut-micro');
+    if (!e.target.checked) { S.cfg.audio = false; st.textContent = 'Enregistrement désactivé.'; st.classList.remove('err'); return; }
+    st.textContent = 'Autorisation du micro…'; st.classList.remove('err');
+    const ok = await Rec.ouvrirMicro();
+    if (ok) {
+      S.cfg.audio = true;
+      st.textContent = `Micro prêt. Fichiers .${Rec.ext}, un par orateur, plus la séance entière.`;
+      vuMetre();
+    } else {
+      S.cfg.audio = false; e.target.checked = false; st.classList.add('err');
+      st.textContent = 'Micro refusé ou indisponible ici. Ouvrez le fichier .html dans Chrome, Edge ou Firefox et autorisez le micro.';
+    }
+  });
+
+  CHAMPS_TEMPS.forEach(f => {
+    const inp = $('#f-' + f.k);
+    inp.addEventListener('change', () => {
+      const v = f.nombre ? parseInt(inp.value, 10) : lireTemps(inp.value, f.k);
+      if (v != null && !Number.isNaN(v)) S.cfg[f.k] = v;
+      bornerTemps(); majTempsChamps(); rendreOrdre(); sauverCfg();
+    });
+  });
+
+  form.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const d = +b.dataset.d;
+    if (b.dataset.t) {
+      const f = CHAMPS_TEMPS.find(x => x.k === b.dataset.t);
+      S.cfg[f.k] = clamp(S.cfg[f.k] + d * f.pas, f.min, f.max); bornerTemps(); majTempsChamps(); rendreOrdre(); sauverCfg();
+    } else if (b.dataset.n) {
+      const m = S.cfg.equipes[b.dataset.n].membres;
+      if (d > 0 && m.length < 10) m.push(''); else if (d < 0 && m.length > 3) m.pop();
+      rendreEquipes(); rendreOrdre(); sauverCfg();
+    } else if (b.dataset.coller) {
+      const z = $('#coller-' + b.dataset.coller); z.hidden = !z.hidden; if (!z.hidden) $('#f-coller-' + b.dataset.coller).focus();
+    } else if (b.dataset.collerOk) {
+      const eq = b.dataset.collerOk;
+      let noms = $('#f-coller-' + eq).value.split(/[\n;,\t]+/).map(s => s.trim()).filter(Boolean);
+      if (!noms.length) { toast('La liste est vide'); return; }
+      if (noms.length > 10) { toast(`${noms.length} noms : seuls les 10 premiers sont gardés`); noms = noms.slice(0, 10); }
+      while (noms.length < 3) noms.push('');
+      S.cfg.equipes[eq].membres = noms; S.cfg.exemple = false;
+      rendreEquipes(); rendreOrdre(); sauverCfg();
+    } else if (b.dataset.melanger) {
+      const m = S.cfg.equipes[b.dataset.melanger].membres;
+      for (let i = m.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [m[i], m[j]] = [m[j], m[i]]; }
+      rendreEquipes(); rendreOrdre(); sauverCfg(); toast('Ordre tiré au sort');
+    } else if (b.dataset.up || b.dataset.down) {
+      const eq = b.dataset.up || b.dataset.down, i = +b.dataset.i, j = b.dataset.up ? i - 1 : i + 1, m = S.cfg.equipes[eq].membres;
+      if (j < 0 || j >= m.length) return;
+      [m[i], m[j]] = [m[j], m[i]];
+      rendreEquipes(); rendreOrdre(); sauverCfg();
+      const cible = $(`[data-${b.dataset.up ? 'up' : 'down'}="${eq}"][data-i="${j}"]`); if (cible && !cible.disabled) cible.focus();
+    } else if (b.dataset.preset) {
+      if (b.dataset.preset === 'fda') {
+        Object.assign(S.cfg, { tParole: 360, tProtege: 60, tGrace: 15, poiMax: 2, poiBonus: 0, poiDuree: 15 });
+        for (const eq of ['G', 'O']) { const m = S.cfg.equipes[eq].membres; while (m.length < 5) m.push(''); while (m.length > 5) m.pop(); }
+        toast('Format FDA : 5 orateurs par équipe, 6:00, POI pris sur le temps de parole');
+      } else {
+        Object.assign(S.cfg, { tParole: 90, tProtege: 15, tGrace: 15, poiMax: 2, poiBonus: 15, poiDuree: 15 });
+        toast('Format classe : 1:30, +15 s par POI');
+      }
+      bornerTemps(); rendreEquipes(); majTempsChamps(); rendreOrdre(); sauverCfg();
+    }
+  });
+  form.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.eq && t.dataset.i != null) {
+      S.cfg.equipes[t.dataset.eq].membres[+t.dataset.i] = t.value; S.cfg.exemple = false; rendreOrdre(); sauverCfg();
+    } else if (t.dataset.nomEq) { S.cfg.equipes[t.dataset.nomEq].nom = t.value; sauverCfg(); }
+  });
+  form.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault(); // Entrée ne lance pas la séance par accident
+  });
+
+  $('#btn-restore').addEventListener('click', restaurerSeance);
+  $('#btn-restore-ignore').addEventListener('click', () => { LS.del(K_SEANCE); $('#restore').hidden = true; });
+}
+
+let vuActif = false;
+function vuMetre() {
+  if (vuActif) return; vuActif = true;
+  const step = () => {
+    if (!Rec.stream || S.phase !== 'setup') { $('#vu').style.width = '0'; vuActif = false; return; }
+    $('#vu').style.width = Math.round(clamp(Rec.niveau() * 140, 0, 100)) + '%';
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function appliquerSalle() { document.body.dataset.salle = S.cfg.salle === 'jour' ? 'jour' : 'nuit'; }
+
+/* ============================================================
+   SÉANCE : transitions
+   ============================================================ */
+function nouvelleSpeech(i) {
+  return { i, debut: null, fin: null, acc: 0, runStart: null, alloue: ms(S.cfg.tParole), ajust: 0, poi: [], refus: [], pauses: [], flags: {}, absent: false };
+}
+
+async function ouvrirSeance() {
+  bornerTemps();
+  for (const eq of ['G', 'O']) { const m = S.cfg.equipes[eq].membres; while (m.length < 3) m.push(''); if (m.length > 10) m.length = 10; }
+  Son.get();
+  S.ordre = construireOrdre(S.cfg);
+  S.seance = { t0: Date.now(), fin: null };
+  Object.assign(S, { cur: 0, etat: 'pret', speeches: [], events: [], comments: [], poiActif: null, jury: juryDefaut(), notation: notationDefaut(), phase: 'debate' });
+  if (S.cfg.audio) {
+    const ok = await Rec.ouvrirMicro();
+    if (ok) { S.seance.t0 = Date.now(); Rec.demarrerSeance(); }
+    else { S.cfg.audio = false; toast('Micro indisponible : la séance se déroule sans enregistrement'); }
+  }
+  sauverCfg();
+  log('ouverture', S.cfg.motion.trim(), null);
+  appelOrateur();
+  afficherVue('debate');
+  rendreSeance();
+  Son.jouer('ouverture');
+  garderEcran();
+}
+
+function appelOrateur() {
+  if (!S.speeches[S.cur]) S.speeches[S.cur] = nouvelleSpeech(S.cur);
+  const o = oCourant();
+  log('appel', `${o.nom} · ${o.role} (${COTE[o.equipe]})`);
+}
+
+function lancer() {
+  const sp = spCourant();
+  sp.debut = rel(); sp.runStart = Date.now();
+  S.etat = 'parole';
+  log('debut');
+  Rec.debutSegment(nomFichierAudio(S.cur), { orateur: oCourant().id });
+  rendreSeance();
+}
+function suspendre(motif = 'pause') {
+  const sp = spCourant();
+  if (S.etat === 'parole') { sp.acc += Date.now() - sp.runStart; sp.runStart = null; }
+  sp.pauses.push({ debut: rel(), fin: null, motif });
+  S.etat = 'pause'; S.motifPause = motif;
+  log(motif === 'reglement' ? 'reglement' : 'pause', `à ${duree(sp.acc)}`);
+  Son.jouer('court');
+  rendreSeance();
+}
+function reprendre() {
+  const sp = spCourant(), p = sp.pauses[sp.pauses.length - 1];
+  if (p && p.fin == null) p.fin = rel();
+  sp.runStart = Date.now(); S.etat = 'parole';
+  if (!Rec.seg && Rec.actif) Rec.debutSegment(nomFichierAudio(S.cur, 'suite'), { orateur: oCourant().id });
+  log('reprise');
+  rendreSeance();
+}
+function toggleChrono() {
+  if (S.etat === 'pret') lancer();
+  else if (S.etat === 'parole') suspendre('pause');
+  else if (S.etat === 'pause') reprendre();
+  else toast('Débats clos : B ouvre le compte rendu');
+}
+function finaliserSpeech() {
+  const sp = spCourant();
+  if (S.etat === 'parole') { sp.acc += Date.now() - sp.runStart; sp.runStart = null; }
+  const p = sp.pauses[sp.pauses.length - 1]; if (p && p.fin == null) p.fin = rel();
+  sp.fin = rel(); S.poiActif = null;
+  log('fin', `${duree(sp.acc)} sur ${duree(sp.alloue)}${sp.poi.length ? ` · ${sp.poi.length} POI` : ''}`);
+  Rec.finSegment(true);
+}
+function cloreIntervention() {
+  finaliserSpeech();
+  S.cur++;
+  if (S.cur >= S.ordre.length) { cloturer(); return; }
+  S.etat = 'pret';
+  appelOrateur();
+  Son.jouer('appel');
+  rendreSeance();
+}
+function cloturer(detail = '') {
+  S.etat = 'fini'; S.cur = S.ordre.length; S.seance.fin = rel(); S.poiActif = null;
+  log('cloture', detail, null);
+  Son.jouer('cloture');
+  rendreSeance();
+}
+function passerParole() {
+  if (S.etat === 'parole' || S.etat === 'pause') cloreIntervention();
+  else if (S.etat === 'pret') toast('Chrono non lancé : Espace pour lancer, N si l’orateur est absent');
+  else toast('Débats clos : B ouvre le compte rendu');
+}
+function avancer() { // télécommande de présentation
+  const t = Date.now(); if (t - UI.dernierAvance < 800) return; UI.dernierAvance = t;
+  if (S.etat === 'pret') lancer();
+  else if (S.etat === 'parole' || S.etat === 'pause') cloreIntervention();
+  else allerBilan();
+}
+/* Fixe les signaux d'une intervention d'après son temps écoulé, sans siffler. */
+function etablirSignaux(sp) {
+  const e = ecoule(sp), A = sp.alloue, P = ms(S.cfg.tProtege), G = ms(S.cfg.tGrace);
+  sp.flags = { ouvert: e >= P, final: e >= A - P, ecoule: e >= A, grace: e >= A + G };
+  if (sp.flags.grace) sp.flags.rappel = A + G + 20000 * (Math.floor((e - A - G) / 20000) + 1);
+}
+/* Revenir sur le changement d'orateur (Maj+Retour arrière, ←, Ctrl+Z). */
+function annulerChangement() {
+  let ia;
+  if (S.etat === 'fini') { ia = S.speeches.length - 1; while (ia >= 0 && !S.speeches[ia]) ia--; }
+  else ia = S.cur - 1;
+  if (ia < 0 || !S.speeches[ia]) { toast('Aucun changement d’orateur à annuler'); return; }
+  const A = S.speeches[ia], oa = S.ordre[ia];
+  if (S.etat === 'fini' && A.debut == null && !A.absent) {
+    S.cur = ia; S.seance.fin = null; S.etat = 'pret';
+    log('annulation', `Séance rouverte : la parole est à ${oa.nom}`); rendreSeance(); return;
+  }
+  const B = S.etat === 'fini' ? null : S.speeches[S.cur], ob = B ? S.ordre[S.cur] : null;
+  const bLance = !!(B && B.debut != null);
+  const eB = bLance ? ecoule(B) : 0;
+
+  const executer = compter => {
+    compter = compter && bLance && !A.absent;
+    const accA = A.acc;
+    if (bLance && Rec.seg) {
+      if (compter) { Rec.seg.nom = nomFichierAudio(ia, 'suite'); Rec.seg.meta.orateur = oa.id; }
+      else { Rec.seg.nom += '_annule'; Rec.finSegment(true); }
+    }
+    S.speeches.length = ia + 1;
+    S.cur = ia; S.seance.fin = null; S.poiActif = null;
+    if (A.absent) { A.absent = false; A.debut = null; A.fin = null; S.etat = 'pret'; }
+    else if (compter) {
+      A.fin = null;
+      B.poi.forEach(p => { p.e += accA; A.poi.push(p); });
+      B.refus.forEach(p => { p.e += accA; A.refus.push(p); });
+      A.alloue += B.poi.length * ms(S.cfg.poiBonus);
+      A.pauses.push(...B.pauses);
+      A.acc += B.acc;
+      if (B.runStart != null) { A.runStart = B.runStart; S.etat = 'parole'; }
+      else { S.etat = 'pause'; S.motifPause = 'pause'; }
+      etablirSignaux(A);
+    } else {
+      A.fin = null;
+      A.pauses.push({ debut: rel(), fin: null, motif: 'reouverture' });
+      S.etat = 'pause'; S.motifPause = 'reouverture';
+    }
+    const detail = !bLance ? '' : compter ? ` · ${duree(eB)} chronométrées pour ${ob.nom} comptées à ${oa.nom}` : ` · ${duree(eB)} de ${ob.nom} non comptées`;
+    log('annulation', `La parole revient à ${oa.nom}${detail}`);
+    toast(`La parole revient à ${oa.nom}`);
+    rendreSeance();
+  };
+
+  if (!bLance) { executer(false); return; }
+  if (A.absent) {
+    confirmer({ titre: `Annuler l’absence de ${oa.nom} ?`, texte: `Le chrono de ${ob.nom} (${duree(eB)}) est remis à zéro ; ${ob.nom} reprendra la parole après ${oa.nom}.`, ok: 'Revenir', touche: '' }, () => executer(false));
+    return;
+  }
+  ouvrirModal(`<span class="hud">Revenir sur le changement d’orateur</span>
+    <h2>Rendre la parole à ${esc(oa.nom)} ?</h2>
+    <p>Le chrono de ${esc(ob.nom)} tourne depuis ${duree(eB)}${B.poi.length ? ` (${B.poi.length} POI)` : ''}. Si c’était en fait ${esc(oa.nom)} qui parlait, comptez ce temps à ${esc(oa.nom)} : son chrono reprend là où il en serait.</p>
+    <p class="aide">${esc(ob.nom)} reprendra la parole juste après, chrono à zéro.</p>
+    <div class="carte-pied"><span><kbd>Entrée</kbd> compter · <kbd>N</kbd> ne pas compter · <kbd>Échap</kbd> annuler</span>
+      <span class="actions"><button type="button" class="btn btn-ghost" data-fermer>Annuler</button><button type="button" class="btn" data-choix="non">Ne pas compter</button><button type="button" class="btn btn-or" data-choix="oui">Compter à ${esc(nomCourt(oa.nom))}</button></span></div>`,
+    { type: 'choix', action: executer });
+  const bo = $('#modal-carte [data-choix="oui"]'); if (bo) bo.focus({ preventScroll: true });
+}
+function recommencer() {
+  if (S.etat !== 'parole' && S.etat !== 'pause') { toast('Aucune intervention en cours'); return; }
+  confirmer({ titre: `Recommencer l’intervention de ${oCourant().nom} ?`, texte: 'Le chrono, les POI et les suspensions de cette intervention sont remis à zéro (décision possible après un rappel au règlement).', ok: 'Recommencer', touche: 'x' }, () => {
+    Rec.finSegment(false);
+    S.speeches[S.cur] = nouvelleSpeech(S.cur); S.etat = 'pret'; S.poiActif = null;
+    log('recommence');
+    rendreSeance();
+  });
+}
+function absent() {
+  if (S.etat !== 'pret') { toast('Possible seulement avant de lancer le chrono'); return; }
+  const o = oCourant();
+  confirmer({ titre: `${o.nom} est absent·e ?`, texte: 'Son tour est passé et noté « absent » au compte rendu.', ok: 'Passer son tour', touche: 'n' }, () => {
+    const sp = spCourant(); sp.absent = true; sp.debut = sp.fin = rel();
+    log('absent');
+    S.cur++;
+    if (S.cur >= S.ordre.length) { cloturer(); return; }
+    appelOrateur(); rendreSeance();
+  });
+}
+function rappelReglement() {
+  if (S.etat === 'parole') suspendre('reglement');
+  else { log('reglement'); toast('Rappel au règlement noté au journal'); if (S.etat === 'pause') { S.motifPause = 'reglement'; rendreSeance(); } }
+}
+
+/* ---------- POI ---------- */
+function horsCreneau(sp, e) {
+  const P = ms(S.cfg.tProtege);
+  return P > 0 && (e < P || e >= sp.alloue - P);
+}
+function ouvrirPicker(kind) {
+  if (S.etat !== 'parole' && S.etat !== 'pause') { toast('Aucune intervention en cours'); return; }
+  const o = oCourant(), adv = ADV[o.equipe], sp = spCourant(), e = ecoule(sp);
+  const membres = S.ordre.filter(x => x.equipe === adv);
+  const donnes = id => S.speeches.reduce((n, s) => n + (s ? s.poi.filter(p => p.auteur === id).length : 0), 0);
+  const avert = [];
+  if (horsCreneau(sp, e)) avert.push('Temps protégé : les POI ne sont normalement pas autorisés maintenant.');
+  if (kind === 'poi' && sp.poi.length >= S.cfg.poiMax) avert.push(`Quota déjà atteint (${sp.poi.length}/${S.cfg.poiMax}) : ce POI sera noté au-delà.`);
+  const titre = kind === 'poi' ? `POI accepté par ${esc(o.nom)}` : `POI refusé par ${esc(o.nom)}`;
+  ouvrirModal(`
+    <span class="hud">${kind === 'poi' ? 'Point d’information' + (S.cfg.poiBonus ? ` · +${S.cfg.poiBonus} s` : '') : 'Point d’information refusé'}</span>
+    <h2>${titre}</h2>
+    <p>Qui le pose, côté ${COTE[adv]} ?</p>
+    ${avert.map(a => `<p class="avert">${esc(a)}</p>`).join('')}
+    <ul class="choix">${membres.map((m, i) => `<li><button type="button" data-pick="${i}"><kbd>${i === 9 ? 0 : i + 1}</kbd><span class="c-nom">${esc(m.nom)}</span><span class="c-n">${donnes(m.id)} posé${donnes(m.id) > 1 ? 's' : ''}</span></button></li>`).join('')}</ul>
+    <div class="carte-pied"><span><kbd>Entrée</kbd> sans préciser · <kbd>Échap</kbd> annuler</span>
+      <span class="actions"><button type="button" class="btn btn-mini" data-pick="-1">Sans préciser</button><button type="button" class="btn btn-mini btn-ghost" data-fermer>Annuler</button></span></div>`,
+    { type: 'picker', kind, membres });
+}
+function choisirPicker(idx) {
+  const o = UI.overlay; if (!o || o.type !== 'picker') return;
+  const m = idx == null || idx < 0 ? null : o.membres[idx];
+  if (idx != null && idx >= 0 && !m) return;
+  fermerOverlay();
+  enregistrerPoi(o.kind, m ? m.id : null);
+}
+function enregistrerPoi(kind, auteurId) {
+  const sp = spCourant(), e = ecoule(sp), cible = oCourant(), adv = ADV[cible.equipe];
+  const hors = horsCreneau(sp, e);
+  const rec = { t: rel(), e, auteur: auteurId, hors };
+  const qui = auteurId ? orateur(auteurId).nom : `membre de l’${COTE[adv]}`;
+  if (kind === 'poi') {
+    sp.poi.push(rec);
+    sp.alloue += ms(S.cfg.poiBonus);
+    recalerSignaux(sp);
+    S.poiActif = { auteur: auteurId, debutE: e, finE: e + ms(S.cfg.poiDuree) };
+    log('poi', `${qui} → ${cible.nom}${hors ? ' · en temps protégé' : ''}${S.cfg.poiBonus ? ` · +${S.cfg.poiBonus} s` : ''}`);
+    Son.jouer('poi');
+  } else {
+    sp.refus.push(rec);
+    log('refus', `${qui} → ${cible.nom}`);
+    toast(`POI de ${nomCourt(qui)} refusé`);
+  }
+  rendreSeance();
+}
+function annulerPoi() {
+  const sp = spCourant(); if (!sp || (S.etat !== 'parole' && S.etat !== 'pause')) { toast('Aucune intervention en cours'); return; }
+  const tous = [...sp.poi.map(p => ['poi', p]), ...sp.refus.map(p => ['refus', p])].sort((a, b) => a[1].t - b[1].t);
+  const der = tous.pop(); if (!der) { toast('Aucun POI à annuler'); return; }
+  const [k, p] = der, arr = k === 'poi' ? sp.poi : sp.refus;
+  arr.splice(arr.indexOf(p), 1);
+  if (k === 'poi') { sp.alloue -= ms(S.cfg.poiBonus); if (S.poiActif && S.poiActif.debutE === p.e) S.poiActif = null; recalerSignaux(sp); }
+  log('poi_annule', k === 'poi' ? 'POI accepté retiré' : 'POI refusé retiré');
+  toast(k === 'poi' ? 'Dernier POI accepté annulé' : 'Dernier POI refusé annulé');
+  rendreSeance();
+}
+function ajuster(sec) {
+  const sp = spCourant(); if (!sp || S.etat === 'fini') return;
+  const avant = sp.alloue;
+  sp.alloue = Math.max(5000, sp.alloue + ms(sec)); sp.ajust += sp.alloue - avant;
+  recalerSignaux(sp);
+  log('ajust', `${sec > 0 ? '+' : '−'}${Math.abs(sec)} s (temps imparti ${duree(sp.alloue)})`);
+  toast(`${sec > 0 ? '+' : '−'}${Math.abs(sec)} s · temps imparti ${duree(sp.alloue)}`);
+  rendreSeance();
+}
+
+/* ---------- Signaux (sifflets) ---------- */
+function recalerSignaux(sp) {
+  const e = ecoule(sp), A = sp.alloue, P = ms(S.cfg.tProtege), G = ms(S.cfg.tGrace), f = sp.flags;
+  if (e < A + G) { f.grace = false; f.rappel = null; }
+  if (e < A) f.ecoule = false;
+  if (e < A - P) f.final = false;
+}
+function verifierSignaux() {
+  if (S.etat !== 'parole') return;
+  const sp = spCourant(); if (!sp) return;
+  const e = ecoule(sp), A = sp.alloue, P = ms(S.cfg.tProtege), G = ms(S.cfg.tGrace), f = sp.flags;
+  if (P > 0 && A - P > P) {
+    if (!f.ouvert && e >= P && e < A - P) { f.ouvert = true; Son.jouer('court'); log('signal', 'Fin du temps protégé : POI autorisés'); }
+    if (!f.final && e >= A - P && e < A) { f.final = true; f.ouvert = true; Son.jouer('court'); log('signal', `Conclusion : ${duree(P)} protégées`); }
+  }
+  if (!f.ecoule && e >= A) {
+    f.ecoule = f.final = f.ouvert = true;
+    Son.jouer(G > 0 ? 'double' : 'long'); log('signal', 'Temps imparti écoulé');
+    if (G === 0) { f.grace = true; f.rappel = A + 20000; }
+  }
+  if (G > 0 && !f.grace && e >= A + G) { f.grace = true; f.rappel = A + G + 20000; Son.jouer('long'); log('signal', 'Fin du temps de grâce'); }
+  if (f.grace && f.rappel && e >= f.rappel) { Son.jouer('court'); f.rappel += 20000; }
+  if (S.poiActif && e >= S.poiActif.finE) { Son.jouer('tweet'); S.poiActif = null; rendrePoi(); }
+}
+
+/* ============================================================
+   SÉANCE : affichage
+   ============================================================ */
+const RING = { r: 100, C: 2 * Math.PI * 100, Cg: 2 * Math.PI * 110, Cp: 2 * Math.PI * 88, Ct: 2 * Math.PI * 117 };
+function arc(el, from, to, C) {
+  const len = Math.max(0, to - from) * C;
+  el.setAttribute('stroke-dasharray', `${len.toFixed(2)} ${C.toFixed(2)}`);
+  el.setAttribute('stroke-dashoffset', (-from * C).toFixed(2));
+}
+const memo = new Map();
+function setTxt(id, txt) { if (memo.get(id) === txt) return; memo.set(id, txt); const el = document.getElementById(id); if (el) el.textContent = txt; }
+function setHtml(id, html) { if (memo.get('h' + id) === html) return; memo.set('h' + id, html); const el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+function phaseDe(sp, e) {
+  const A = sp.alloue, P = ms(S.cfg.tProtege), G = ms(S.cfg.tGrace);
+  if (e >= A + G) return ['depasse', 'Temps dépassé'];
+  if (e >= A) return ['grace', 'Temps de grâce'];
+  if (P > 0 && e < P) return ['protege', 'Temps protégé'];
+  if (P > 0 && e >= A - P) return ['protege', 'Conclusion · temps protégé'];
+  return ['ouvert', 'POI autorisés'];
+}
+
+function statsOrateur(i) {
+  const o = S.ordre[i], sp = S.speeches[i];
+  const poiDonnes = S.speeches.reduce((n, s) => n + (s ? s.poi.filter(p => p.auteur === o.id).length : 0), 0);
+  const refusSubis = S.speeches.reduce((n, s) => n + (s ? s.refus.filter(p => p.auteur === o.id).length : 0), 0);
+  return { poiRecus: sp ? sp.poi.length : 0, refusDonnes: sp ? sp.refus.length : 0, poiDonnes, refusSubis };
+}
+
+function rendreBancs() {
+  for (const eq of ['G', 'O']) {
+    const liste = S.ordre.map((o, i) => [o, i]).filter(([o]) => o.equipe === eq);
+    $('#banc-' + eq).classList.toggle('dense', liste.length > 7);
+    setTxt('d-eq-' + eq, (S.cfg.equipes[eq].nom || '').trim());
+    let total = 0;
+    const html = liste.map(([o, i]) => {
+      const sp = S.speeches[i], st = statsOrateur(i);
+      let cls = 'st-avenir', stat = '';
+      if (i === S.cur && S.etat !== 'fini') { cls = 'st-courant'; stat = S.etat === 'pret' ? 'À la tribune' : 'En cours'; }
+      else if (sp && sp.absent) { cls = 'st-absent'; stat = 'Absent'; }
+      else if (sp && sp.fin != null) {
+        cls = 'st-fait'; const e = ecoule(sp); total += e;
+        const over = e > sp.alloue + ms(S.cfg.tGrace) ? 'over' : e > sp.alloue ? 'grace' : '';
+        stat = `<span class="${over}">${mmss(e / 1000)}</span>`;
+      }
+      const meta = [esc(o.role)];
+      if (st.poiRecus || st.refusDonnes) meta.push(`POI reçus ${st.poiRecus}${st.refusDonnes ? ` (${st.refusDonnes} refusé${st.refusDonnes > 1 ? 's' : ''})` : ''}`);
+      if (st.poiDonnes) meta.push(`posés ${st.poiDonnes}`);
+      return `<li class="bi ${cls}"><span class="bi-num">${i + 1}</span><span class="bi-nom">${esc(o.nom)}</span><span class="bi-stat">${stat}</span><span class="bi-meta">${meta.join(' · ')}</span></li>`;
+    }).join('');
+    setHtml('d-liste-' + eq, html);
+    const poiPoses = S.speeches.reduce((n, s) => n + (s && S.ordre[s.i].equipe !== eq ? s.poi.length : 0), 0);
+    setHtml('d-score-' + eq, `${mmss(total / 1000)} de parole<br>${poiPoses} POI posé${poiPoses > 1 ? 's' : ''}`);
+  }
+  const courantEl = $('.bi.st-courant'); if (courantEl) courantEl.scrollIntoView({ block: 'nearest' });
+}
+
+function rendrePoi() {
+  const sp = spCourant();
+  if (!sp || S.etat === 'fini') { setHtml('d-poi', ''); return; }
+  const n = sp.poi.length, max = S.cfg.poiMax;
+  let pts = '';
+  for (let k = 0; k < Math.max(max, n); k++) pts += `<i class="${k < n ? (k < max ? 'on' : 'plus') : ''}"></i>`;
+  const html = `<span>POI</span><span class="poi-pts" aria-label="${n} POI acceptés sur ${max} attendus">${pts}</span><span>${n}/${max}${sp.refus.length ? ` · ${sp.refus.length} refusé${sp.refus.length > 1 ? 's' : ''}` : ''}</span>`;
+  setHtml('d-poi', html);
+}
+
+function rendreRegistre() {
+  const vis = S.comments.filter(c => !c.cachee);
+  const html = vis.length ? vis.slice().reverse().map((c, k) => {
+    const o = c.orateur ? orateur(c.orateur) : null;
+    return `<li class="${k === 0 && Date.now() - (c.ajout || 0) < 3000 ? 'neuf' : ''}"><span class="rg-t">${tplus(c.t)}</span><span>${o ? `<span class="rg-qui">${esc(nomCourt(o.nom))} · ${COTE[o.equipe]}</span>` : ''}${esc(c.texte)}</span></li>`;
+  }).join('') : '<li class="vide">Aucune remarque pour l’instant. Touche C pour en inscrire une.</li>';
+  setHtml('d-remarques', html);
+  setTxt('d-registre-n', vis.length ? String(vis.length) : '');
+}
+
+function rendreVoile() {
+  const v = $('#d-voile');
+  if (S.etat === 'pause') {
+    const sp = spCourant();
+    const titre = S.motifPause === 'reglement' ? 'Order, order !' : S.motifPause === 'reouverture' ? 'Intervention rouverte' : S.motifPause === 'interruption' ? 'Séance restaurée' : 'Suspension de séance';
+    v.innerHTML = `<span class="hud">${esc(oCourant().nom)} · chrono arrêté à ${mmss(ecoule(sp) / 1000)} sur ${mmss(sp.alloue / 1000)}</span>
+      <p class="voile-titre">${titre}</p>
+      <p class="voile-sous">${S.motifPause === 'reglement' ? 'Rappel au règlement · ' : ''}Espace pour reprendre · Entrée pour clore l'intervention</p>`;
+    v.hidden = false;
+  } else if (S.etat === 'fini') {
+    const parole = S.speeches.reduce((n, s) => n + (s && !s.absent ? ecoule(s) : 0), 0);
+    const nPoi = S.speeches.reduce((n, s) => n + (s ? s.poi.length : 0), 0);
+    v.innerHTML = `<span class="hud">${tplus(S.seance.fin || rel())} · ${S.ordre.length} orateurs · ${mmss(parole / 1000)} de parole · ${nPoi} POI</span>
+      <p class="voile-titre">Clôture des débats</p>
+      <p class="voile-sous">Le jury se retire pour délibérer. La parole est à la salle.</p>
+      <div class="ligne" style="justify-content:center"><button type="button" class="btn btn-or" data-act="bilan">Ouvrir le compte rendu</button><span class="aide"><kbd>B</kbd> · <kbd>Maj</kbd>+<kbd>⌫</kbd> revient sur la dernière intervention</span></div>`;
+    v.hidden = false;
+  } else v.hidden = true;
+}
+
+function rendreSeance() {
+  const v = $('#v-debate'), o = oCourant(), sp = spCourant();
+  v.dataset.etat = S.etat;
+  v.dataset.eq = o && S.etat !== 'fini' ? o.equipe : '';
+  setTxt('d-titre', S.cfg.titre.trim() || 'Séance');
+  setTxt('d-motion', S.cfg.motion.trim() || 'Motion non précisée');
+  setTxt('d-progress', S.etat === 'fini' ? 'Débats clos' : `Intervention ${S.cur + 1} / ${S.ordre.length}`);
+  $('#d-rec').hidden = !Rec.actif;
+  $('#d-mute').hidden = S.cfg.sifflets;
+  if (o && S.etat !== 'fini') {
+    setTxt('d-appel', S.etat === 'pret' ? `La parole est à · ${COTE[o.equipe]}` : `${COTE[o.equipe]} · ${o.role}`);
+    setTxt('d-nom', o.nom);
+  } else { setTxt('d-appel', 'Séance close'); setTxt('d-nom', ''); }
+  setTxt('dock-chrono', { pret: 'Lancer', parole: 'Suspendre', pause: 'Reprendre', fini: 'Chrono' }[S.etat]);
+  const suiv = S.etat === 'fini' ? null : S.ordre[S.cur + 1];
+  setHtml('d-suivant', suiv ? `<span class="hud">À suivre</span><strong>${esc(suiv.nom)}</strong><span class="r">${esc(suiv.role)} · ${COTE[suiv.equipe]}</span>` : (S.etat === 'fini' ? '<span class="hud">Ordre du jour épuisé</span>' : '<span class="hud">À suivre</span><strong>Clôture des débats</strong><span class="r">Dernière intervention</span>'));
+  dessinerChambre($('#plan-debate'), S.ordre, i => {
+    const s = S.speeches[i];
+    if (i === S.cur && S.etat !== 'fini') return 'courant';
+    if (s && s.absent) return 'absent';
+    if (s && s.fin != null) return 'fait';
+    return '';
+  });
+  $('#d-registre').hidden = !S.ui.registre;
+  $('#d-pied').classList.toggle('sans-registre', !S.ui.registre);
+  $('#dock').hidden = !S.ui.dock;
+  rendreBancs(); rendrePoi(); rendreRegistre(); rendreVoile();
+  afficherDynamique();
+  sauver();
+}
+
+function afficherDynamique() {
+  if (S.phase !== 'debate') return;
+  setTxt('d-clock', tplus(S.seance.fin != null && S.etat === 'fini' ? S.seance.fin : rel()));
+  const sp = spCourant(), v = $('#v-debate');
+  if (!sp || S.etat === 'fini') { v.dataset.phase = ''; return; }
+  const e = ecoule(sp), A = sp.alloue, P = ms(S.cfg.tProtege), G = ms(S.cfg.tGrace);
+  const [k, lib] = S.etat === 'pret' ? ['attente', 'Le chrono démarre après les salutations'] : phaseDe(sp, e);
+  if (v.dataset.phase !== k) v.dataset.phase = k;
+  setTxt('d-phase', S.etat === 'pause' ? 'Chrono suspendu' : lib);
+  const reste = A - e;
+  const txt = reste >= 0 ? mmss(Math.ceil(reste / 1000)) : '+' + mmss(Math.floor(-reste / 1000));
+  if (memo.get('tps') !== txt) { memo.set('tps', txt); $('#d-temps').classList.toggle('long', txt.length >= 5); $('#d-temps').innerHTML = [...txt].map(c => /\d/.test(c) ? `<span class="d">${c}</span>` : `<span class="${c === '+' ? 'p' : 's'}">${c}</span>`).join(''); }
+  const bonus = A - ms(S.cfg.tParole);
+  setTxt('d-sous', S.etat === 'pret' ? `${mmss(A / 1000)} · Espace pour lancer` : `sur ${mmss(A / 1000)}${bonus ? ` · ${bonus > 0 ? '+' : '−'}${duree(Math.abs(bonus))} ajouté${bonus > 0 ? 's' : 's'}` : ''}`);
+  const cle = `${Math.round(e / 100)}|${A}|${P}|${G}|${S.poiActif ? S.poiActif.finE : 0}`;
+  if (memo.get('ring') !== cle) {
+    memo.set('ring', cle);
+    arc($('#ring-prog'), 0, Math.min(e / A, 1), RING.C);
+    arc($('#ring-prot1'), 0, P > 0 ? Math.min(P / A, 1) : 0, RING.C);
+    arc($('#ring-prot2'), P > 0 ? Math.max(0, (A - P) / A) : 1, 1, RING.C);
+    arc($('#ring-grace'), 0, e > A ? Math.min((e - A) / Math.max(G, 1000), 1) : 0, RING.Cg);
+    const pa = S.poiActif;
+    arc($('#ring-poi'), 0, pa ? clamp((pa.finE - e) / (pa.finE - pa.debutE), 0, 1) : 0, RING.Cp);
+  }
+  const ban = $('#d-poi-banniere'), pa = S.poiActif;
+  if (pa) {
+    const qui = pa.auteur ? orateur(pa.auteur) : null;
+    setTxt('d-poi-qui', `${qui ? qui.nom : 'Membre de l’' + COTE[ADV[oCourant().equipe]]} → ${oCourant().nom}`);
+    setTxt('d-poi-reste', `· ${Math.max(0, Math.ceil((pa.finE - e) / 1000))} s`);
+    $('#d-poi-barre').style.width = (clamp((pa.finE - e) / (pa.finE - pa.debutE), 0, 1) * 100).toFixed(1) + '%';
+    if (ban.hidden) ban.hidden = false;
+  } else if (!ban.hidden) ban.hidden = true;
+}
+
+const ticks = $('#ring-ticks');
+ticks.setAttribute('stroke-dasharray', `1.2 ${(RING.Ct / 60 - 1.2).toFixed(2)}`);
+
+/* ============================================================
+   Remarques, superpositions, aide
+   ============================================================ */
+function cibleRemarqueDefaut() {
+  if (S.etat === 'parole' || S.etat === 'pause') return oCourant().id;
+  if (S.etat === 'pret' && S.cur > 0) return S.ordre[S.cur - 1].id;
+  if (S.etat === 'fini' && S.ordre.length) return '';
+  return '';
+}
+const MASQUE_CSS = (() => { try { return CSS.supports('-webkit-text-security', 'disc'); } catch (e) { return false; } })();
+function appliquerMasque(on) {
+  const i = $('#f-remarque');
+  if (MASQUE_CSS) { i.type = 'text'; i.classList.toggle('masque', on); }
+  else { i.type = on ? 'password' : 'text'; }
+  i.placeholder = on ? 'Note cachée…' : 'Votre remarque…';
+  $('#barre-remarque').classList.toggle('discret', on);
+}
+$('#f-cachee').addEventListener('change', e => { appliquerMasque(e.target.checked); S.cfg.remarqueCachee = e.target.checked; sauverCfg(); $('#f-remarque').focus(); });
+function ouvrirRemarque(forceCachee = false) {
+  const sel = $('#f-remarque-cible');
+  sel.innerHTML = `<option value="">La séance en général</option>` + S.ordre.map(o => `<option value="${o.id}">${esc(o.nom)} · ${COTE[o.equipe]}</option>`).join('');
+  sel.value = cibleRemarqueDefaut();
+  const cachee = forceCachee || !!S.cfg.remarqueCachee;
+  $('#f-cachee').checked = cachee; appliquerMasque(cachee);
+  $('#f-remarque').value = '';
+  $('#remarque-t').textContent = '· ' + tplus(rel());
+  $('#barre-remarque').hidden = false;
+  UI.overlay = { type: 'remarque', t: rel(), ts: Date.now() };
+  $('#f-remarque').focus();
+}
+function validerRemarque() {
+  const txt = $('#f-remarque').value.trim(), cachee = $('#f-cachee').checked, cible = $('#f-remarque-cible').value || null;
+  const t = UI.overlay ? UI.overlay.t : rel(), ts = UI.overlay ? UI.overlay.ts : Date.now();
+  $('#f-remarque').value = '';
+  fermerOverlay();
+  if (!txt) return;
+  S.comments.push({ t, ts, texte: txt, cachee, orateur: cible, ajout: Date.now() });
+  S.events.push({ t, ts, type: cachee ? 'remarque_cachee' : 'remarque', detail: txt, orateur: cible });
+  S.events.sort((a, b) => a.t - b.t);
+  sauver();
+  rendreRegistre(); rendreBancs();
+  toast(cachee ? 'Note inscrite' : 'Remarque inscrite au registre');
+}
+$('#f-remarque').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); validerRemarque(); }
+  else if (e.key === 'Escape') { e.preventDefault(); fermerOverlay(); }
+});
+
+function ouvrirModal(html, overlay) {
+  $('#modal-carte').innerHTML = html;
+  $('#modal-carte').classList.toggle('large', overlay.type === 'aide');
+  $('#modal').hidden = false;
+  UI.overlay = overlay;
+  const f = $('#modal-carte button'); if (f) f.focus({ preventScroll: true });
+}
+function fermerOverlay() {
+  $('#modal').hidden = true; $('#barre-remarque').hidden = true;
+  UI.overlay = null;
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+}
+function confirmer({ titre, texte, ok = 'Confirmer', touche = '' }, action) {
+  ouvrirModal(`<h2>${esc(titre)}</h2><p>${esc(texte)}</p>
+    <div class="carte-pied"><span><kbd>Entrée</kbd>${touche ? ` ou <kbd>${touche.toUpperCase()}</kbd>` : ''} confirmer · <kbd>Échap</kbd> annuler</span>
+    <span class="actions"><button type="button" class="btn btn-ghost" data-fermer>Annuler</button><button type="button" class="btn btn-or" data-confirmer>${esc(ok)}</button></span></div>`,
+    { type: 'confirm', action, touche });
+  const b = $('#modal-carte [data-confirmer]'); if (b) b.focus({ preventScroll: true });
+}
+$('#modal').addEventListener('click', e => {
+  const o = UI.overlay;
+  if (e.target === $('#modal')) { fermerOverlay(); return; }
+  const b = e.target.closest('button'); if (!b || !o) return;
+  if (b.hasAttribute('data-fermer')) fermerOverlay();
+  else if (b.hasAttribute('data-confirmer')) { const a = o.action; fermerOverlay(); a(); }
+  else if (b.dataset.pick != null) choisirPicker(+b.dataset.pick);
+  else if (b.dataset.choix && o.type === 'choix') { const a = o.action; fermerOverlay(); a(b.dataset.choix === 'oui'); }
+});
+
+function ouvrirAide() {
+  const L = (k, t) => `<dt>${k}</dt><dd>${t}</dd>`;
+  ouvrirModal(`<span class="hud">Raccourcis clavier</span><h2>Conduire la séance sans quitter le clavier</h2>
+    <div class="raccourcis">
+      <div><h3 class="hud">L'essentiel</h3><dl>
+        ${L('<kbd>Espace</kbd>', 'Lancer, suspendre, reprendre le chrono')}
+        ${L('<kbd>Entrée</kbd>', 'Clore l’intervention, appeler l’orateur suivant')}
+        ${L('<kbd>Maj</kbd>+<kbd>⌫</kbd>', 'Revenir sur le changement d’orateur (aussi <kbd>←</kbd> ou <kbd>Ctrl</kbd>+<kbd>Z</kbd>)')}
+        ${L('<kbd>P</kbd>', 'POI accepté, puis <kbd>1</kbd>…<kbd>0</kbd> pour qui le pose')}
+        ${L('<kbd>R</kbd>', 'POI refusé (même choix)')}
+        ${L('<kbd>C</kbd>', 'Remarque horodatée (projetée, ou cachée si le mode est actif)')}
+        ${L('<kbd>Maj</kbd>+<kbd>C</kbd>', 'Remarque cachée : saisie en points, compte rendu seulement')}
+        ${L('<kbd>S</kbd>', 'Coup de sifflet')}
+        ${L('<kbd>B</kbd>', 'Compte rendu et export Excel')}
+      </dl></div>
+      <div><h3 class="hud">Corrections et confort</h3><dl>
+        ${L('<kbd>O</kbd>', 'Rappel au règlement (suspend le chrono)')}
+        ${L('<kbd>+</kbd> <kbd>−</kbd>', 'Ajouter ou retirer 5 s')}
+        ${L('<kbd>⌫</kbd>', 'Annuler le dernier POI')}
+        ${L('<kbd>X</kbd>', 'Recommencer l’intervention')}
+        ${L('<kbd>N</kbd>', 'Orateur absent : passer son tour')}
+        ${L('<kbd>M</kbd>', 'Couper ou rétablir les sifflets')}
+        ${L('<kbd>H</kbd> · <kbd>D</kbd>', 'Masquer le registre · la barre de commandes')}
+        ${L('<kbd>L</kbd> · <kbd>F</kbd>', 'Salle éclairée · plein écran')}
+      </dl></div>
+    </div>
+    <p class="aide">Télécommande de présentation : page suivante lance le chrono puis passe la parole ; page précédente suspend ou reprend.</p>
+    <div class="carte-pied"><span><kbd>Échap</kbd> fermer</span><span class="actions"><button type="button" class="btn btn-or" data-fermer>Fermer</button></span></div>`,
+    { type: 'aide' });
+}
+
+let toastT = null;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false; t.style.opacity = '1';
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => { t.hidden = true; }, 220); }, 2400);
+}
+
+/* ============================================================
+   Clavier
+   ============================================================ */
+const enSaisie = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+function chiffre(code) { const m = /^(?:Digit|Numpad)(\d)$/.exec(code || ''); if (!m) return null; const n = +m[1]; return n === 0 ? 9 : n - 1; }
+
+document.addEventListener('keydown', e => {
+  if (S.phase !== 'debate') { if (UI.overlay && e.key === 'Escape') { e.preventDefault(); fermerOverlay(); } return; }
+  const o = UI.overlay;
+  if (o) {
+    if (o.type === 'remarque') { if (e.key === 'Escape') { e.preventDefault(); fermerOverlay(); } return; }
+    if (e.key === 'Escape') { e.preventDefault(); fermerOverlay(); return; }
+    if (o.type === 'picker') {
+      const d = chiffre(e.code);
+      if (d != null) { e.preventDefault(); choisirPicker(d); }
+      else if (e.key === 'Enter') { e.preventDefault(); choisirPicker(-1); }
+      else if (e.key === ' ') e.preventDefault();
+      return;
+    }
+    if (o.type === 'confirm') {
+      if (e.key === 'Enter' || (o.touche && e.key.toLowerCase() === o.touche)) { e.preventDefault(); const a = o.action; fermerOverlay(); a(); }
+      else if (e.key === ' ') e.preventDefault();
+      return;
+    }
+    if (o.type === 'choix') {
+      if (e.key === 'Enter' || e.key.toLowerCase() === 'n') { e.preventDefault(); const a = o.action; fermerOverlay(); a(e.key === 'Enter'); }
+      else if (e.key === ' ') e.preventDefault();
+      return;
+    }
+    if (o.type === 'aide') { if (e.key === '?' || e.key === 'Enter' || e.key.toLowerCase() === 'a') { e.preventDefault(); fermerOverlay(); } return; }
+    return;
+  }
+  if (enSaisie(e.target)) return;
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); annulerChangement(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  let fait = true;
+  switch (k) {
+    case ' ': case 'Spacebar': toggleChrono(); break;
+    case 'Enter': passerParole(); break;
+    case 'PageDown': avancer(); break;
+    case 'PageUp': if (S.etat === 'parole' || S.etat === 'pause') toggleChrono(); break;
+    case 'ArrowLeft': annulerChangement(); break;
+    case 'p': ouvrirPicker('poi'); break;
+    case 'r': ouvrirPicker('refus'); break;
+    case 'c': ouvrirRemarque(e.shiftKey); break;
+    case 's': Son.jouer('court', true); log('sifflet'); break;
+    case 'o': rappelReglement(); break;
+    case '+': case '=': ajuster(5); break;
+    case '-': case '_': ajuster(-5); break;
+    case 'Backspace': case 'Delete': if (e.shiftKey) annulerChangement(); else annulerPoi(); break;
+    case 'x': recommencer(); break;
+    case 'n': absent(); break;
+    case 'm': S.cfg.sifflets = !S.cfg.sifflets; sauverCfg(); toast(S.cfg.sifflets ? 'Sifflets rétablis' : 'Sifflets coupés'); rendreSeance(); break;
+    case 'h': S.ui.registre = !S.ui.registre; rendreSeance(); break;
+    case 'd': S.ui.dock = !S.ui.dock; rendreSeance(); break;
+    case 'l': S.cfg.salle = S.cfg.salle === 'jour' ? 'nuit' : 'jour'; appliquerSalle(); sauverCfg(); break;
+    case 'f': pleinEcran(); break;
+    case 'b': allerBilan(); break;
+    case '?': case 'a': ouvrirAide(); break;
+    case 'Escape': break;
+    default: fait = false;
+  }
+  if (fait) e.preventDefault();
+});
+
+$('#v-debate').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  b.blur();
+  const act = b.dataset.act;
+  ({ chrono: toggleChrono, suivant: passerParole, annuler: annulerChangement, poi: () => ouvrirPicker('poi'), refus: () => ouvrirPicker('refus'),
+     remarque: () => ouvrirRemarque(false), sifflet: () => { Son.jouer('court', true); log('sifflet'); }, aide: ouvrirAide, bilan: allerBilan }[act] || (() => {}))();
+});
+
+function pleinEcran() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => toast('Plein écran indisponible ici'));
+    else toast('Plein écran indisponible ici');
+  } catch (e) { toast('Plein écran indisponible ici'); }
+}
+let verrou = null;
+async function garderEcran() { try { if ('wakeLock' in navigator) verrou = await navigator.wakeLock.request('screen'); } catch (e) { verrou = null; } }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.phase === 'debate') garderEcran(); });
+window.addEventListener('beforeunload', e => { if (S.phase === 'debate' && Rec.actif) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ============================================================
+   Boucle
+   ============================================================ */
+setInterval(() => {
+  if (S.phase !== 'debate') return;
+  verifierSignaux();
+  afficherDynamique();
+  if (S.etat === 'parole' && Date.now() - (S.dernierSave || 0) > 2000) sauver();
+}, 100);
+
+/* ============================================================
+   PROCÈS-VERBAL
+   ============================================================ */
+function allerBilan() {
+  if (S.etat !== 'fini') {
+    confirmer({ titre: 'Clore la séance maintenant ?', texte: 'L’intervention en cours est arrêtée ; les orateurs qui ne sont pas passés figureront « non passés » au compte rendu.', ok: 'Clore et ouvrir le compte rendu', touche: 'b' }, () => {
+      if (S.etat === 'parole' || S.etat === 'pause') finaliserSpeech();
+      cloturer('Séance close avant la fin de l’ordre du jour');
+      afficherBilan();
+    });
+    return;
+  }
+  afficherBilan();
+}
+async function afficherBilan() {
+  if (Rec.actif) { toast('Finalisation de l’enregistrement…'); await Rec.arreter(); }
+  S.phase = 'report';
+  afficherVue('report');
+  choisirOnglet('seance');
+  rendreBilan();
+  sauver();
+  window.scrollTo(0, 0);
+}
+
+function lignesOrateurs() {
+  const G = ms(S.cfg.tGrace);
+  return S.ordre.map((o, i) => {
+    const sp = S.speeches[i], st = statsOrateur(i);
+    const passe = sp && sp.debut != null && !sp.absent;
+    const e = passe ? ecoule(sp) : 0, A = sp ? sp.alloue : ms(S.cfg.tParole);
+    let statut = 'Non passé', cle = 'off';
+    if (sp && sp.absent) { statut = 'Absent'; }
+    else if (passe) {
+      if (e <= A) { statut = 'Dans le temps'; cle = 'ok'; }
+      else if (e <= A + G) { statut = 'Temps de grâce'; cle = 'grace'; }
+      else { statut = 'Dépassement'; cle = 'over'; }
+    }
+    const pauses = sp ? sp.pauses.filter(p => p.motif === 'pause' || p.motif === 'reglement') : [];
+    const pauseMs = pauses.reduce((n, p) => n + ((p.fin ?? (sp.fin ?? rel())) - p.debut), 0);
+    const nRem = S.comments.filter(c => c.orateur === o.id).length;
+    const fich = Rec.fichiers.filter(f => f.meta && f.meta.orateur === o.id).map(f => f.nom).join(', ');
+    return { o, i, sp, passe, e, A, ecart: passe ? Math.round((e - A) / 1000) : null, statut, cle, ...st, pausesN: pauses.length, pauseMs, nRem, fich,
+      bonus: sp ? sp.poi.length * S.cfg.poiBonus : 0, ajust: sp ? Math.round(sp.ajust / 1000) : 0 };
+  });
+}
+function statsEquipe(eq, lignes) {
+  const L = lignes.filter(l => l.o.equipe === eq);
+  const sum = f => L.reduce((n, l) => n + f(l), 0);
+  return {
+    parole: sum(l => l.e), interventions: L.filter(l => l.passe).length,
+    dansLeTemps: L.filter(l => l.cle === 'ok').length, grace: L.filter(l => l.cle === 'grace').length, depass: L.filter(l => l.cle === 'over').length,
+    depassCumul: sum(l => l.passe && l.ecart > 0 ? l.ecart : 0),
+    poiRecus: sum(l => l.poiRecus), refusDonnes: sum(l => l.refusDonnes),
+    poiPoses: S.speeches.reduce((n, s) => n + (s && S.ordre[s.i].equipe !== eq ? s.poi.length : 0), 0),
+    poiRefusesSubis: S.speeches.reduce((n, s) => n + (s && S.ordre[s.i].equipe !== eq ? s.refus.length : 0), 0),
+    suspensions: sum(l => l.pausesN), remarques: sum(l => l.nRem),
+  };
+}
+function resultatJury() {
+  const tot = eq => S.jury[eq].reduce((a, b) => a + b, 0);
+  const complet = eq => S.jury[eq].every(v => v > 0);
+  const tg = tot('G'), to = tot('O');
+  let gagnant = null;
+  if (complet('G') && complet('O')) gagnant = tg > to ? 'G' : to > tg ? 'O' : (S.jury.departage || null);
+  return { tg, to, complet: complet('G') && complet('O'), egalite: complet('G') && complet('O') && tg === to, gagnant };
+}
+
+function rendreBilan() {
+  const lignes = lignesOrateurs();
+  $('#pv-seance').textContent = S.cfg.titre.trim() || 'Séance';
+  $('#pv-motion').textContent = S.cfg.motion.trim() || 'Motion non précisée';
+  const d = new Date(S.seance.t0);
+  const total = S.seance.fin != null ? S.seance.fin : rel();
+  $('#pv-meta').innerHTML = [
+    ['Date', d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })],
+    ['Ouverture', heure(S.seance.t0)], ['Durée de séance', hms(total)],
+    ['Orateurs', String(S.ordre.length)], ['Temps imparti', `${mmss(S.cfg.tParole)}${S.cfg.poiBonus ? ` + ${S.cfg.poiBonus} s par POI` : ''}`],
+  ].map(([a, b]) => `<span>${a} <b>${esc(b)}</b></span>`).join('');
+  $('#btn-zip').hidden = !Rec.fichiers.length;
+  $('#btn-zip').textContent = `Télécharger l'audio (.zip, ${Rec.fichiers.length} fichiers)`;
+
+  $('#pv-equipes').innerHTML = ['G', 'O'].map(eq => {
+    const s = statsEquipe(eq, lignes), nom = (S.cfg.equipes[eq].nom || '').trim();
+    const C = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+    return `<article class="pv-eq" data-eq="${eq}"><h2>${COTE[eq]}${nom ? `<small>${esc(nom)}</small>` : ''}</h2>
+      <div class="chiffres">${C(mmss(s.parole / 1000), 'temps de parole cumulé')}${C(`${s.dansLeTemps}/${s.interventions}`, 'interventions dans le temps')}${C(s.poiPoses, 'POI posés et acceptés')}${C(s.poiRecus, 'POI subis (acceptés)')}
+      ${C(s.depass, 'dépassements au-delà de la grâce')}${C(s.poiRefusesSubis, 'POI posés mais refusés')}${C(s.refusDonnes, 'POI refusés par l’équipe')}${C(s.suspensions, 'suspensions du chrono')}</div></article>`;
+  }).join('');
+
+  $('#pv-orateurs').innerHTML = `<thead><tr><th class="num">N°</th><th>Orateur</th><th>Rôle</th><th>Équipe</th><th class="num">Début</th><th class="num">Parole</th><th class="num">Imparti</th><th class="num">Écart</th><th>Statut</th><th class="num">POI subis</th><th class="num">POI refusés</th><th class="num">POI posés</th><th class="num">Posés refusés</th><th class="num">Suspensions</th></tr></thead><tbody>`
+    + lignes.map(l => `<tr data-eq="${l.o.equipe}"><td class="num">${l.i + 1}</td><td><strong>${esc(l.o.nom)}</strong></td><td>${esc(l.o.role)}</td><td>${COTE[l.o.equipe]}</td>
+      <td class="num">${l.passe ? tplus(l.sp.debut) : '—'}</td><td class="num">${l.passe ? mmss(l.e / 1000) : '—'}</td><td class="num">${mmss(l.A / 1000)}</td>
+      <td class="num">${l.ecart == null ? '—' : (l.ecart > 0 ? '+' : l.ecart < 0 ? '−' : '') + mmss(Math.abs(l.ecart))}</td><td><span class="st st-${l.cle}">${l.statut}</span></td>
+      <td class="num">${l.poiRecus}</td><td class="num">${l.refusDonnes}</td><td class="num">${l.poiDonnes}</td><td class="num">${l.refusSubis}</td><td class="num">${l.pausesN ? `${l.pausesN} (${duree(l.pauseMs)})` : '0'}</td></tr>`).join('') + '</tbody>';
+
+  rendreJury();
+  rendreNotation();
+
+  const rem = S.comments.slice().sort((a, b) => a.t - b.t);
+  $('#pv-remarques').innerHTML = rem.length ? rem.map(c => {
+    const o = c.orateur ? orateur(c.orateur) : null;
+    return `<li><span class="rg-t">${tplus(c.t)}</span><span>${o ? `<span class="rg-qui">${esc(o.nom)} · ${COTE[o.equipe]}${c.cachee ? '<span class="cachee">cachée</span>' : ''}</span>` : (c.cachee ? '<span class="rg-qui"><span class="cachee">cachée</span></span>' : '')}${esc(c.texte)}</span></li>`;
+  }).join('') : '<li><span></span><span class="aide">Aucune remarque inscrite pendant la séance.</span></li>';
+
+  $('#pv-journal').innerHTML = `<thead><tr><th class="num">T+</th><th class="num">Heure</th><th>Événement</th><th>Orateur</th><th>Détail</th></tr></thead><tbody>`
+    + S.events.map(ev => { const o = ev.orateur ? orateur(ev.orateur) : null; return `<tr><td class="num">${tplus(ev.t).slice(2)}</td><td class="num">${heure(ev.ts)}</td><td>${LIB[ev.type] || ev.type}</td><td>${o ? esc(o.nom) : ''}</td><td>${esc(ev.detail)}</td></tr>`; }).join('') + '</tbody>';
+}
+
+function rendreJury() {
+  const r = resultatJury();
+  const ligne = eq => `<tr data-eq="${eq}"><th scope="row">${COTE[eq]}</th>${S.jury[eq].map((v, c) => `<td><span class="notes" role="group" aria-label="${CRITERES[c][0]} · ${COTE[eq]}">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-note="${eq}|${c}|${n}" aria-pressed="${v === n}">${n}</button>`).join('')}</span></td>`).join('')}<td class="num"><b>${eq === 'G' ? r.tg : r.to}</b> / 25</td></tr>`;
+  const perdant = r.gagnant ? ADV[r.gagnant] : null;
+  const candidats = S.ordre.filter(o => !perdant || o.equipe === perdant);
+  $('#pv-jury').innerHTML = `<div class="table-wrap"><table class="jury-table"><thead><tr><th>Équipe</th>${CRITERES.map(c => `<th title="${esc(c[1])}">${esc(c[0])}</th>`).join('')}<th class="num">Total</th></tr></thead><tbody>${ligne('G')}${ligne('O')}</tbody></table></div>
+    <div class="verdict">
+      ${r.complet ? (r.egalite && !S.jury.departage ? `<span class="avert">Égalité : la FDA interdit le match nul, le jury vote pour départager.</span>` : `<span class="hud">Victoire</span><span class="gagnant" style="color:var(--${r.gagnant === 'G' ? 'gouv' : 'oppo'})">${r.gagnant ? COTE[r.gagnant] : ''}</span>`) : '<span class="aide">Notez les cinq critères des deux équipes pour désigner le vainqueur.</span>'}
+      ${r.egalite ? `<label class="lbl">Vote du jury <select id="f-departage" style="width:auto"><option value="">À départager</option><option value="G" ${S.jury.departage === 'G' ? 'selected' : ''}>Gouvernement</option><option value="O" ${S.jury.departage === 'O' ? 'selected' : ''}>Opposition</option></select></label>` : ''}
+      <label class="lbl">Meilleur orateur${perdant ? ' (équipe perdante, règle FDA)' : ''} <select id="f-meilleur" style="width:auto"><option value="">—</option>${candidats.map(o => `<option value="${o.id}" ${S.jury.meilleur === o.id ? 'selected' : ''}>${esc(o.nom)} · ${COTE[o.equipe]}</option>`).join('')}</select></label>
+    </div>`;
+}
+$('#pv-jury').addEventListener('click', e => {
+  const b = e.target.closest('[data-note]'); if (!b) return;
+  const [eq, c, n] = b.dataset.note.split('|');
+  S.jury[eq][+c] = S.jury[eq][+c] === +n ? 0 : +n;
+  if (!resultatJury().egalite) S.jury.departage = '';
+  rendreJury(); rendreNotation(); sauver();
+  const btn = $(`[data-note="${eq}|${c}|${n}"]`); if (btn) btn.focus({ preventScroll: true });
+});
+$('#pv-jury').addEventListener('change', e => {
+  if (e.target.id === 'f-departage') { S.jury.departage = e.target.value; rendreJury(); }
+  if (e.target.id === 'f-meilleur') S.jury.meilleur = e.target.value;
+  rendreNotation(); sauver();
+});
+
+/* ============================================================
+   NOTATION : note collective, bonus et malus individuels, remarques
+   ============================================================ */
+const fr = n => (Math.round(n * 100) / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+const signe = n => n > 0 ? '+' + fr(n) : n < 0 ? '−' + fr(-n) : '0';
+const lireNote = v => { v = String(v).trim().replace(',', '.'); if (v === '') return null; const n = parseFloat(v); return Number.isFinite(n) ? n : NaN; };
+function noteSuggeree(eq) {
+  const v = S.jury[eq]; if (!v.every(x => x > 0)) return null;
+  return Math.round(v.reduce((a, b) => a + b, 0) / 25 * S.notation.sur * 2) / 2;
+}
+function noteCollective(eq) { const c = S.notation.coll[eq]; return c != null ? c : noteSuggeree(eq); }
+function noteDe(o) {
+  const sp = S.speeches[S.ordre.indexOf(o)];
+  const b = S.notation.bonus[o.id] || 0, c = noteCollective(o.equipe);
+  if (sp && sp.absent) return { absent: true, b, c };
+  return { b, c, f: c == null ? null : clamp(c + b, 0, S.notation.sur) };
+}
+const remarquesDe = (id, avecCachees = true) => S.comments.filter(c => (c.orateur || null) === id && (avecCachees || !c.cachee)).sort((a, b) => a.t - b.t);
+function texteNote(n) { return n.absent ? 'Absent' : n.f == null ? '—' : `${fr(n.f)} / ${S.notation.sur}`; }
+
+function rendreNotation() {
+  const N = S.notation;
+  $('#f-sur').value = String(N.sur);
+  $('#f-pdf-cachees').checked = !!N.pdfCachees;
+  $('#f-pdf-page').checked = !!N.pdfPage;
+  $('#pv-collectif').innerHTML = ['G', 'O'].map(eq => {
+    const nom = (S.cfg.equipes[eq].nom || '').trim(), sug = noteSuggeree(eq), man = N.coll[eq] != null, val = noteCollective(eq);
+    const t = S.jury[eq].reduce((a, b) => a + b, 0);
+    const aide = man ? (sug != null ? `Saisie manuelle. <button type="button" class="lien" data-reprendre="${eq}">Reprendre la grille du jury (${fr(sug)})</button>` : 'Saisie manuelle.')
+      : sug != null ? `D'après la grille du jury : ${t} / 25.` : 'Saisissez la note, ou remplissez la grille du jury ci-dessus.';
+    return `<article class="coll-eq" data-eq="${eq}"><h3>${COTE[eq]}${nom ? `<small>${esc(nom)}</small>` : ''}</h3>
+      <div class="coll-saisie"><label class="sr" for="f-coll-${eq}">Note collective ${COTE[eq]}</label><input type="text" inputmode="decimal" id="f-coll-${eq}" data-coll="${eq}" value="${val == null ? '' : fr(val)}" placeholder="—" autocomplete="off"><span>/ ${N.sur}</span></div>
+      <p class="aide">${aide}</p></article>`;
+  }).join('');
+  $('#pv-notes').innerHTML = `<thead><tr><th class="num">N°</th><th>Orateur</th><th>Rôle</th><th>Équipe</th><th class="num">Note collective</th><th>Bonus / malus</th><th class="num">Note finale</th><th class="num">Remarques</th></tr></thead><tbody>`
+    + S.ordre.map((o, i) => {
+      const n = noteDe(o);
+      return `<tr data-eq="${o.equipe}"><td class="num">${i + 1}</td><td><strong>${esc(o.nom)}</strong></td><td>${esc(o.role)}</td><td>${COTE[o.equipe]}</td>
+        <td class="num">${n.c == null ? '—' : fr(n.c)}</td>
+        <td><div class="stepper bm" role="group" aria-label="Bonus ou malus de ${esc(o.nom)}"><button type="button" data-bm="${o.id}|-0.5" aria-label="Retirer un demi-point">−</button><output>${signe(n.b)}</output><button type="button" data-bm="${o.id}|0.5" aria-label="Ajouter un demi-point">+</button></div></td>
+        <td class="num note-finale">${texteNote(n)}</td><td class="num">${remarquesDe(o.id).length}</td></tr>`;
+    }).join('') + '</tbody>';
+  const carte = (o, rems) => {
+    const n = o ? noteDe(o) : null;
+    return `<article data-eq="${o ? o.equipe : ''}"><div class="i-tete"><h3>${o ? esc(o.nom) : 'Remarques générales'}</h3>${n ? `<span class="i-note">${texteNote(n)}</span>` : ''}</div>
+      ${o ? `<span class="i-role">${esc(o.role)} · ${COTE[o.equipe]}${n && !n.absent && n.c != null ? ` · note collective ${fr(n.c)}${n.b ? `, ${n.b > 0 ? 'bonus' : 'malus'} ${signe(n.b)}` : ''}` : ''}</span>` : '<span class="i-role">La séance en général</span>'}
+      ${rems.length ? `<ul>${rems.map(c => `<li>${esc(c.texte)}${c.cachee ? '<span class="tag-cachee">cachée</span>' : ''}</li>`).join('')}</ul>` : '<p class="vide">Aucune remarque.</p>'}</article>`;
+  };
+  const gen = remarquesDe(null);
+  $('#pv-indiv').innerHTML = S.ordre.map(o => carte(o, remarquesDe(o.id))).join('') + (gen.length ? carte(null, gen) : '');
+}
+$('#pan-notation').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.bm) {
+    const [id, d] = b.dataset.bm.split('|');
+    const v = Math.round(((S.notation.bonus[id] || 0) + +d) * 2) / 2;
+    S.notation.bonus[id] = clamp(v, -S.notation.sur, S.notation.sur);
+    rendreNotation(); sauver();
+    const nb = $(`[data-bm="${id}|${d}"]`); if (nb) nb.focus({ preventScroll: true });
+  } else if (b.dataset.reprendre) { S.notation.coll[b.dataset.reprendre] = null; rendreNotation(); sauver(); }
+});
+$('#pan-notation').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.coll) {
+    const v = lireNote(t.value);
+    if (Number.isNaN(v)) { toast('Note illisible : écrivez par exemple 14,5'); rendreNotation(); return; }
+    S.notation.coll[t.dataset.coll] = v == null ? null : clamp(Math.round(v * 100) / 100, 0, S.notation.sur);
+  } else if (t.id === 'f-sur') {
+    const avant = S.notation.sur, apres = +t.value;
+    for (const eq of ['G', 'O']) if (S.notation.coll[eq] != null) S.notation.coll[eq] = Math.round(S.notation.coll[eq] / avant * apres * 2) / 2;
+    S.notation.sur = apres;
+  } else if (t.id === 'f-pdf-cachees') S.notation.pdfCachees = t.checked;
+  else if (t.id === 'f-pdf-page') S.notation.pdfPage = t.checked;
+  else return;
+  rendreNotation(); sauver();
+});
+$('#pan-notation').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.coll) e.target.blur(); });
+
+function choisirOnglet(nom) {
+  for (const [t, pnl] of [['seance', 'pan-seance'], ['notation', 'pan-notation']]) {
+    const on = t === nom, b = $('#tab-' + t);
+    b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
+    $('#' + pnl).hidden = !on;
+  }
+}
+$('.onglets').addEventListener('click', e => { const b = e.target.closest('[role="tab"]'); if (b) choisirOnglet(b.id.replace('tab-', '')); });
+$('.onglets').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const cible = $('#tab-seance').getAttribute('aria-selected') === 'true' ? 'notation' : 'seance';
+  choisirOnglet(cible); $('#tab-' + cible).focus(); e.preventDefault();
+});
+
+/* ---------- PDF (jsPDF) ---------- */
+/* Caractères hors WinAnsi (police standard Times du PDF) : remplacés ou retirés. */
+const WINANSI = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+const pdfTxt = s => String(s ?? '').replace(/ʼ/g, '’').replace(/−/g, '–').replace(/[  ]/g, ' ').replace(/→/g, '->')
+  .replace(/[\s\S]/g, c => (c.charCodeAt(0) < 256 || WINANSI.includes(c)) ? c : '');
+const phrase = t => { t = String(t).trim(); if (!t) return ''; t = t[0].toUpperCase() + t.slice(1); return /[.!?…»"”)]$/.test(t) ? t : t + '.'; };
+
+/* PDF compact, noir et blanc, Times 12, interligne 1,15, paragraphes justifiés. */
+function construirePdf() {
+  const J = window.jspdf && window.jspdf.jsPDF; if (!J) throw new Error('pdf');
+  const doc = new J({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, M = 15, L = W - 2 * M, BAS = H - 16;
+  const PT = 12, EM = PT * 25.4 / 72, LH = EM * 1.15, ECART = 1.4, Y0 = M + EM * 0.8;
+  const N = S.notation, avecC = !!N.pdfCachees, parPage = !!N.pdfPage, sur = N.sur;
+  const titre = S.cfg.titre.trim(), motion = S.cfg.motion.trim() || 'Motion non précisée';
+  const date = new Date(S.seance.t0).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const r = resultatJury();
+  const STY = { n: 'normal', b: 'bold', i: 'italic', bi: 'bolditalic' };
+  const note = v => `${fr(v)}/${sur}`;
+  doc.setTextColor(0, 0, 0); doc.setDrawColor(0, 0, 0); doc.setFontSize(PT);
+  let y = Y0;
+
+  const largeur = (t, s) => { doc.setFont('times', STY[s]); return doc.getTextWidth(t.replace(/ /g, ' ')); };
+  const ESP = largeur(' ', 'n');
+  /* Découpe en lignes : on ne coupe qu'aux espaces ; les morceaux collés (style différent sans espace) restent ensemble. */
+  function composer(segs) {
+    const groupes = []; let esp = true;
+    for (const [s, t] of segs) {
+      for (const m of pdfTxt(t).match(/[ \t\n]+|[^ \t\n]+/g) || []) {
+        if (/^[ \t\n]+$/.test(m)) { esp = true; continue; }
+        const part = { t: m, s, w: largeur(m, s) };
+        if (esp || !groupes.length) groupes.push({ parts: [part], w: part.w }); else { const g = groupes[groupes.length - 1]; g.parts.push(part); g.w += part.w; }
+        esp = false;
+      }
+    }
+    const lignes = []; let cur = [], w = 0;
+    for (const g of groupes) {
+      if (cur.length && w + ESP + g.w > L) { lignes.push({ g: cur, w }); cur = []; w = 0; }
+      if (!cur.length && g.w > L) { // mot plus long que la ligne (adresse web…)
+        const p = g.parts[0];
+        doc.setFont('times', STY[p.s]);
+        const bouts = doc.splitTextToSize(g.parts.map(x => x.t).join(''), L);
+        bouts.slice(0, -1).forEach(b => lignes.push({ g: [{ parts: [{ t: b, s: p.s, w: largeur(b, p.s) }], w: largeur(b, p.s) }], w: L }));
+        const der = bouts[bouts.length - 1]; cur = [{ parts: [{ t: der, s: p.s, w: largeur(der, p.s) }], w: largeur(der, p.s) }]; w = cur[0].w;
+        continue;
+      }
+      w += (cur.length ? ESP : 0) + g.w; cur.push(g);
+    }
+    if (cur.length) lignes.push({ g: cur, w });
+    return lignes;
+  }
+  function paragraphe(segs, { justifier = true, garder = 0 } = {}) {
+    const lignes = composer(segs);
+    const bloc = Math.max(lignes.length <= 4 ? lignes.length : 2, garder + 1);
+    if (y > Y0 && y + (bloc - 1) * LH > BAS) { doc.addPage(); y = Y0; }
+    lignes.forEach((li, k) => {
+      if (y > BAS) { doc.addPage(); y = Y0; }
+      const trous = li.g.length - 1, reste = L - li.w;
+      const extra = justifier && k < lignes.length - 1 && trous > 0 && reste / trous < ESP * 3 ? reste / trous : 0;
+      let x = M;
+      li.g.forEach(g => {
+        g.parts.forEach(p => { doc.setFont('times', STY[p.s]); doc.text(p.t, x, y); x += p.w; });
+        x += ESP + extra;
+      });
+      y += LH;
+    });
+    y += ECART;
+  }
+  const filet = () => { const yy = y - LH + 1.1; doc.setLineWidth(0.2); doc.line(M, yy, W - M, yy); y += 2.2; };
+
+  const entete = () => {
+    paragraphe([['b', `Compte rendu${titre ? ' · ' + titre : ''}`], ['n', `, ${date}.`]], { justifier: false });
+    paragraphe([['n', 'Motion : '], ['i', motion]], { justifier: false });
+  };
+  const resume = () => {
+    const segs = [];
+    for (const eq of ['G', 'O']) {
+      const c = noteCollective(eq), grille = S.jury[eq].every(v => v > 0) ? S.jury[eq].reduce((a, b) => a + b, 0) : null;
+      segs.push(['b', nomEquipe(eq)], ['n', ` : ${c == null ? 'non noté' : note(c)}${grille != null ? ` (grille du jury ${grille}/25)` : ''}. `]);
+    }
+    if (r.gagnant) segs.push(['n', `Victoire : ${nomEquipe(r.gagnant)}. `]);
+    if (S.jury.meilleur && orateur(S.jury.meilleur)) segs.push(['n', `Meilleur orateur : ${orateur(S.jury.meilleur).nom}.`]);
+    paragraphe(segs);
+  };
+  const titreEquipe = eq => {
+    const c = noteCollective(eq);
+    paragraphe([['b', nomEquipe(eq).toUpperCase()], ['n', c == null ? '' : ` – note collective ${note(c)}`]], { justifier: false, garder: 1 });
+  };
+  const eleve = o => {
+    const n = noteDe(o), rems = remarquesDe(o.id, avecC).map(c => phrase(c.texte)).filter(Boolean);
+    const segs = [['b', `${o.nom} : ${n.absent ? 'absent' : n.f == null ? 'non noté' : note(n.f)}`]];
+    if (!n.absent && n.b) segs.push(['i', ` (${n.b > 0 ? 'bonus +' : 'malus –'}${fr(Math.abs(n.b))})`]);
+    segs.push(['n', '.'], ['n', rems.length ? ' ' + rems.join(' ') : n.absent ? '' : ' Pas de remarque.']);
+    return segs;
+  };
+
+  if (parPage) {
+    /* Fiches à découper : plusieurs élèves par page, séparés par un trait pointillé. */
+    S.ordre.forEach(o => {
+      const c = noteCollective(o.equipe);
+      const paras = [
+        [['b', titre || 'Débat'], ['n', `, ${date}. Motion\u00a0: `], ['i', motion]],
+        [['n', `${nomEquipe(o.equipe)}${c == null ? '' : ` – note collective ${note(c)}`}.`]],
+        eleve(o),
+      ];
+      const h = paras.reduce((n, p) => n + composer(p).length * LH + ECART, 0);
+      if (y > Y0 && y - LH + h > BAS) { doc.addPage(); y = Y0; }
+      paras.forEach((p, k) => paragraphe(p, { justifier: k === 2 }));
+      const yy = y - LH + 2.6;
+      if (yy + 6 < BAS) { doc.setLineWidth(0.2); doc.setLineDashPattern([1.6, 1.4], 0); doc.line(M, yy, W - M, yy); doc.setLineDashPattern([], 0); }
+      y += 5.2;
+    });
+  } else {
+    entete(); resume(); filet();
+    for (const eq of ['G', 'O']) {
+      titreEquipe(eq);
+      S.ordre.filter(o => o.equipe === eq).forEach(o => paragraphe(eleve(o)));
+      y += ECART;
+    }
+    const gen = remarquesDe(null, avecC).map(c => phrase(c.texte)).filter(Boolean);
+    if (gen.length) paragraphe([['b', 'Remarques générales. '], ['n', gen.join(' ')]]);
+    const nb = doc.getNumberOfPages();
+    if (nb > 1) for (let i = 1; i <= nb; i++) { doc.setPage(i); doc.setFont('times', 'normal'); doc.setFontSize(PT); doc.text(`${i}/${nb}`, W / 2, H - 8, { align: 'center' }); }
+  }
+  return doc.output('blob');
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-pdf]'); if (!b) return;
+  if (!window.jspdf) { toast('Module PDF non chargé : vérifiez la connexion puis rechargez'); return; }
+  b.disabled = true;
+  try { await offrirFichier(nomExport('pdf').replace('CR_', 'Notes_'), construirePdf()); }
+  catch (err) { toast('Échec de la création du PDF'); console.error(err); }
+  finally { b.disabled = false; }
+});
+
+$('#btn-retour-seance').addEventListener('click', () => { S.phase = 'debate'; afficherVue('debate'); rendreSeance(); });
+$('#btn-nouvelle').addEventListener('click', () => {
+  ouvrirModalHorsSeance(`<h2>Nouvelle séance</h2><p>Pensez à télécharger le bilan Excel${Rec.fichiers.length ? ' et l’audio' : ''} avant : ce compte rendu sera remplacé.</p>
+    <div class="carte-pied"><span></span><span class="actions"><button type="button" class="btn btn-ghost" data-fermer>Annuler</button><button type="button" class="btn" data-nouv="vide">Tout effacer</button><button type="button" class="btn btn-or" data-nouv="memes">Garder équipes et réglages</button></span></div>`);
+});
+function ouvrirModalHorsSeance(html) {
+  $('#modal-carte').classList.remove('large');
+  $('#modal-carte').innerHTML = html; $('#modal').hidden = false; UI.overlay = { type: 'libre' };
+}
+$('#modal').addEventListener('click', e => {
+  const b = e.target.closest('[data-nouv]'); if (!b) return;
+  fermerOverlay();
+  if (b.dataset.nouv === 'vide') {
+    const c = cfgDefaut();
+    c.equipes = { G: { nom: '', membres: ['', '', '', '', ''] }, O: { nom: '', membres: ['', '', '', '', ''] } };
+    c.motion = ''; c.exemple = false; c.salle = S.cfg.salle;
+    S.cfg = c;
+  }
+  S.cfg.audio = false;
+  Object.assign(S, { phase: 'setup', ordre: [], seance: null, cur: 0, etat: 'pret', speeches: [], events: [], comments: [], poiActif: null, jury: juryDefaut(), notation: notationDefaut() });
+  Rec.fichiers = [];
+  LS.del(K_SEANCE); sauverCfg();
+  $('#statut-micro').textContent = 'Micro non activé.'; $('#statut-micro').classList.remove('err');
+  afficherVue('setup'); rendreSetup(); window.scrollTo(0, 0);
+});
+
+/* ============================================================
+   Export Excel (ExcelJS)
+   ============================================================ */
+const XL = { encre: 'FF0B1020', or: 'FFB8902E', orPale: 'FFF6EEDB', gouv: 'FF2F5FD8', gouvPale: 'FFE5ECFD', oppo: 'FFC92A37', oppoPale: 'FFFBE6E8', gris: 'FF6B7390', ligne: 'FFD5DAE5', ok: 'FF13824F', alerte: 'FFB36200', danger: 'FFC21C1C' };
+const jourXL = s => s / 86400;
+const dateLocale = ts => new Date(ts - new Date(ts).getTimezoneOffset() * 60000);
+
+function enteteXL(ws, row) {
+  const r = ws.getRow(row);
+  r.font = { name: 'Calibri', bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+  r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.encre } };
+  r.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+  r.height = 32;
+}
+function bordures(ws, from, to, nCols) {
+  for (let i = from; i <= to; i++) for (let c = 1; c <= nCols; c++) ws.getRow(i).getCell(c).border = { bottom: { style: 'thin', color: { argb: XL.ligne } } };
+}
+function titreXL(ws, texte, sous, nCols) {
+  ws.mergeCells(1, 1, 1, nCols);
+  const c = ws.getCell(1, 1); c.value = texte; c.font = { name: 'Georgia', size: 16, bold: true, color: { argb: XL.encre } };
+  ws.getRow(1).height = 26;
+  if (sous) { ws.mergeCells(2, 1, 2, nCols); const s = ws.getCell(2, 1); s.value = sous; s.font = { name: 'Georgia', italic: true, size: 11, color: { argb: XL.gris } }; s.alignment = { wrapText: true, vertical: 'top' }; ws.getRow(2).height = 30; }
+}
+
+async function construireExcel() {
+  if (!window.ExcelJS) throw new Error('excel');
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'polem.os'; wb.created = new Date(); wb.title = 'Compte rendu de débat';
+  const lignes = lignesOrateurs(), r = resultatJury();
+  const motion = S.cfg.motion.trim() || 'Motion non précisée';
+  const total = S.seance.fin != null ? S.seance.fin : rel();
+  const fillEq = eq => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: eq === 'G' ? XL.gouvPale : XL.oppoPale } });
+  const fontEq = eq => ({ bold: true, color: { argb: eq === 'G' ? XL.gouv : XL.oppo } });
+
+  /* --- Synthèse --- */
+  const sy = wb.addWorksheet('Synthèse', { views: [{ showGridLines: false }], properties: { tabColor: { argb: XL.or } } });
+  sy.columns = [{ width: 34 }, { width: 26 }, { width: 26 }];
+  titreXL(sy, `Compte rendu · ${S.cfg.titre.trim() || 'Séance de débat'}`, motion, 3);
+  const infos = [
+    ['Date', dateLocale(S.seance.t0), 'dddd d mmmm yyyy'],
+    ['Ouverture de la séance', dateLocale(S.seance.t0), 'hh:mm:ss'],
+    ['Durée de la séance', jourXL(Math.round(total / 1000)), '[h]:mm:ss'],
+    ['Nombre d’orateurs', S.ordre.length],
+    ['Temps de parole par orateur', jourXL(S.cfg.tParole), '[m]:ss'],
+    ['Temps protégé (début et fin)', jourXL(S.cfg.tProtege), '[m]:ss'],
+    ['Temps de grâce', jourXL(S.cfg.tGrace), '[m]:ss'],
+    ['POI attendus par intervention', S.cfg.poiMax],
+    ['Temps ajouté par POI accepté (s)', S.cfg.poiBonus],
+  ];
+  let row = 4;
+  infos.forEach(([k, v, f]) => { const rr = sy.getRow(row++); rr.getCell(1).value = k; rr.getCell(1).font = { color: { argb: XL.gris } }; const c = rr.getCell(2); c.value = v; if (f) c.numFmt = f; c.alignment = { horizontal: 'left' }; c.font = { bold: true }; });
+  row++;
+  const hr = sy.getRow(row); hr.values = ['Équipes', nomEquipe('G'), nomEquipe('O')]; enteteXL(sy, row);
+  hr.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.gouv } }; hr.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.oppo } };
+  const sG = statsEquipe('G', lignes), sO = statsEquipe('O', lignes);
+  const comp = [
+    ['Temps de parole cumulé', jourXL(Math.round(sG.parole / 1000)), jourXL(Math.round(sO.parole / 1000)), '[m]:ss'],
+    ['Interventions prononcées', sG.interventions, sO.interventions],
+    ['… dans le temps imparti', sG.dansLeTemps, sO.dansLeTemps],
+    ['… dans le temps de grâce', sG.grace, sO.grace],
+    ['… en dépassement', sG.depass, sO.depass],
+    ['Dépassement cumulé (s)', sG.depassCumul, sO.depassCumul],
+    ['POI posés et acceptés (donnés)', sG.poiPoses, sO.poiPoses],
+    ['POI posés mais refusés', sG.poiRefusesSubis, sO.poiRefusesSubis],
+    ['POI subis (acceptés par l’équipe)', sG.poiRecus, sO.poiRecus],
+    ['POI refusés par l’équipe', sG.refusDonnes, sO.refusDonnes],
+    ['Suspensions du chrono', sG.suspensions, sO.suspensions],
+    ['Remarques du professeur', sG.remarques, sO.remarques],
+  ];
+  const debutComp = row + 1;
+  comp.forEach(([k, a, b, f]) => { const rr = sy.getRow(++row); rr.values = [k, a, b]; if (f) { rr.getCell(2).numFmt = f; rr.getCell(3).numFmt = f; } rr.getCell(2).alignment = rr.getCell(3).alignment = { horizontal: 'center' }; });
+  bordures(sy, debutComp, row, 3);
+  if (r.complet || S.jury.meilleur) {
+    row += 2;
+    const vr = sy.getRow(row); vr.getCell(1).value = 'Verdict du jury'; vr.getCell(1).font = { name: 'Georgia', bold: true, size: 13 };
+    sy.getRow(++row).values = ['Score Gouvernement / 25', r.tg];
+    sy.getRow(++row).values = ['Score Opposition / 25', r.to];
+    const w = sy.getRow(++row); w.values = ['Vainqueur', r.gagnant ? nomEquipe(r.gagnant) : 'À départager']; w.getCell(2).font = r.gagnant ? fontEq(r.gagnant) : { italic: true };
+    if (S.jury.meilleur) sy.getRow(++row).values = ['Meilleur orateur', `${orateur(S.jury.meilleur).nom} (${COTE[orateur(S.jury.meilleur).equipe]})`];
+  }
+
+  /* --- Orateurs --- */
+  const wo = wb.addWorksheet('Orateurs', { views: [{ state: 'frozen', ySplit: 1, xSplit: 2 }] });
+  wo.columns = [
+    { header: 'Ordre', key: 'ordre', width: 7 }, { header: 'Orateur', key: 'nom', width: 24 }, { header: 'Équipe', key: 'eq', width: 15 },
+    { header: 'Rôle', key: 'role', width: 20 }, { header: 'Prise de parole (T+)', key: 'debut', width: 13 }, { header: 'Fin (T+)', key: 'fin', width: 11 },
+    { header: 'Temps imparti', key: 'alloue', width: 10 }, { header: 'dont POI (s)', key: 'bonus', width: 9 }, { header: 'dont ajustements (s)', key: 'ajust', width: 12 },
+    { header: 'Temps de parole', key: 'parole', width: 10 }, { header: 'Écart (s)', key: 'ecart', width: 9 }, { header: 'Statut', key: 'statut', width: 15 },
+    { header: 'POI subis (acceptés)', key: 'poiRecus', width: 11 }, { header: 'POI refusés par l’orateur', key: 'refusDonnes', width: 12 },
+    { header: 'POI posés (acceptés)', key: 'poiDonnes', width: 11 }, { header: 'POI posés refusés', key: 'refusSubis', width: 11 },
+    { header: 'Suspensions', key: 'pausesN', width: 11 }, { header: 'Durée des suspensions', key: 'pauseMs', width: 12 },
+    { header: 'Remarques', key: 'nRem', width: 10 }, { header: 'Fichier audio', key: 'fich', width: 44 },
+  ];
+  enteteXL(wo, 1);
+  lignes.forEach(l => {
+    const rr = wo.addRow({
+      ordre: l.i + 1, nom: l.o.nom, eq: COTE[l.o.equipe], role: l.o.role,
+      debut: l.passe ? jourXL(Math.floor(l.sp.debut / 1000)) : null, fin: l.passe && l.sp.fin != null ? jourXL(Math.floor(l.sp.fin / 1000)) : null,
+      alloue: jourXL(Math.round(l.A / 1000)), bonus: l.bonus, ajust: l.ajust,
+      parole: l.passe ? jourXL(Math.round(l.e / 1000)) : null, ecart: l.ecart, statut: l.statut,
+      poiRecus: l.poiRecus, refusDonnes: l.refusDonnes, poiDonnes: l.poiDonnes, refusSubis: l.refusSubis,
+      pausesN: l.pausesN, pauseMs: l.pausesN ? jourXL(Math.round(l.pauseMs / 1000)) : null, nRem: l.nRem, fich: l.fich,
+    });
+    rr.getCell('eq').fill = fillEq(l.o.equipe); rr.getCell('eq').font = fontEq(l.o.equipe);
+    rr.getCell('nom').font = { bold: true };
+    const col = { ok: XL.ok, grace: XL.alerte, over: XL.danger, off: XL.gris }[l.cle];
+    rr.getCell('statut').font = { bold: true, color: { argb: col } };
+    if (l.cle === 'over') rr.getCell('ecart').font = { bold: true, color: { argb: XL.danger } };
+  });
+  ['debut', 'fin'].forEach(k => { wo.getColumn(k).numFmt = '[h]:mm:ss'; });
+  ['alloue', 'parole', 'pauseMs'].forEach(k => { wo.getColumn(k).numFmt = '[m]:ss'; });
+  wo.getColumn('ecart').numFmt = '+0;-0;0';
+  for (let c = 5; c <= 19; c++) wo.getColumn(c).alignment = { horizontal: 'center' };
+  enteteXL(wo, 1);
+  wo.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: wo.columns.length } };
+  bordures(wo, 2, lignes.length + 1, wo.columns.length);
+
+  /* --- POI --- */
+  const wp = wb.addWorksheet('POI', { views: [{ state: 'frozen', ySplit: 1 }] });
+  wp.columns = [
+    { header: 'T+', key: 't', width: 10 }, { header: 'Décision', key: 'k', width: 11 }, { header: 'Orateur à la tribune', key: 'cible', width: 24 },
+    { header: 'Équipe', key: 'eqc', width: 15 }, { header: 'Posé par', key: 'auteur', width: 24 }, { header: 'Équipe', key: 'eqa', width: 15 },
+    { header: 'Moment dans l’intervention', key: 'e', width: 14 }, { header: 'En temps protégé', key: 'hors', width: 12 },
+  ];
+  enteteXL(wp, 1);
+  const pois = [];
+  S.speeches.forEach(sp => { if (!sp) return; sp.poi.forEach(p => pois.push(['Accepté', sp, p])); sp.refus.forEach(p => pois.push(['Refusé', sp, p])); });
+  pois.sort((a, b) => a[2].t - b[2].t).forEach(([k, sp, p]) => {
+    const c = S.ordre[sp.i], a = p.auteur ? orateur(p.auteur) : null;
+    const rr = wp.addRow({ t: jourXL(Math.floor(p.t / 1000)), k, cible: c.nom, eqc: COTE[c.equipe], auteur: a ? a.nom : '(non précisé)', eqa: COTE[ADV[c.equipe]], e: jourXL(Math.floor(p.e / 1000)), hors: p.hors ? 'Oui' : 'Non' });
+    rr.getCell('k').font = { bold: true, color: { argb: k === 'Accepté' ? XL.ok : XL.alerte } };
+    rr.getCell('eqc').font = fontEq(c.equipe); rr.getCell('eqa').font = fontEq(ADV[c.equipe]);
+  });
+  wp.getColumn('t').numFmt = '[h]:mm:ss'; wp.getColumn('e').numFmt = '[m]:ss';
+  if (pois.length) wp.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: 8 } };
+  bordures(wp, 2, pois.length + 1, 8);
+
+  /* --- Journal --- */
+  const wj = wb.addWorksheet('Journal', { views: [{ state: 'frozen', ySplit: 1 }] });
+  wj.columns = [{ header: 'T+', key: 't', width: 10 }, { header: 'Heure', key: 'h', width: 10 }, { header: 'Événement', key: 'ev', width: 28 }, { header: 'Orateur', key: 'o', width: 24 }, { header: 'Équipe', key: 'eq', width: 15 }, { header: 'Détail', key: 'd', width: 70 }];
+  enteteXL(wj, 1);
+  S.events.forEach(ev => {
+    const o = ev.orateur ? orateur(ev.orateur) : null;
+    const rr = wj.addRow({ t: jourXL(Math.floor(ev.t / 1000)), h: dateLocale(ev.ts), ev: LIB[ev.type] || ev.type, o: o ? o.nom : '', eq: o ? COTE[o.equipe] : '', d: ev.detail });
+    if (o) rr.getCell('eq').font = fontEq(o.equipe);
+    if (ev.type === 'signal' || ev.type === 'sifflet') rr.getCell('ev').font = { color: { argb: XL.or } };
+    if (ev.type.startsWith('remarque')) rr.getCell('d').alignment = { wrapText: true };
+  });
+  wj.getColumn('t').numFmt = '[h]:mm:ss'; wj.getColumn('h').numFmt = 'hh:mm:ss';
+  wj.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: 6 } };
+  bordures(wj, 2, S.events.length + 1, 6);
+
+  /* --- Remarques --- */
+  const wr = wb.addWorksheet('Remarques', { views: [{ state: 'frozen', ySplit: 1 }] });
+  wr.columns = [{ header: 'T+', key: 't', width: 10 }, { header: 'Heure', key: 'h', width: 10 }, { header: 'À propos de', key: 'o', width: 24 }, { header: 'Équipe', key: 'eq', width: 15 }, { header: 'Remarque', key: 'txt', width: 80 }, { header: 'Cachée', key: 'p', width: 10 }];
+  enteteXL(wr, 1);
+  S.comments.slice().sort((a, b) => a.t - b.t).forEach(c => {
+    const o = c.orateur ? orateur(c.orateur) : null;
+    const rr = wr.addRow({ t: jourXL(Math.floor(c.t / 1000)), h: dateLocale(c.ts), o: o ? o.nom : 'Séance', eq: o ? COTE[o.equipe] : '', txt: c.texte, p: c.cachee ? 'Oui' : 'Non' });
+    rr.getCell('txt').alignment = { wrapText: true, vertical: 'top' };
+    if (o) rr.getCell('eq').font = fontEq(o.equipe);
+  });
+  wr.getColumn('t').numFmt = '[h]:mm:ss'; wr.getColumn('h').numFmt = 'hh:mm:ss';
+  bordures(wr, 2, S.comments.length + 1, 6);
+
+  /* --- Jury --- */
+  if (S.jury.G.some(v => v) || S.jury.O.some(v => v)) {
+    const wjj = wb.addWorksheet('Jury', { views: [{ showGridLines: false }] });
+    wjj.columns = [{ width: 22 }, { width: 46 }, { width: 18 }, { width: 18 }];
+    titreXL(wjj, 'Grille du jury', 'Cinq critères égaux, notés de 1 à 5 ; score final sur 25 (règles FDA).', 4);
+    const h = wjj.getRow(4); h.values = ['Critère', 'Ce qui est évalué', 'Gouvernement', 'Opposition']; enteteXL(wjj, 4);
+    CRITERES.forEach(([c, d], k) => { const rr = wjj.getRow(5 + k); rr.values = [c, d, S.jury.G[k] || null, S.jury.O[k] || null]; rr.getCell(3).alignment = rr.getCell(4).alignment = { horizontal: 'center' }; rr.getCell(2).alignment = { wrapText: true }; });
+    const t = wjj.getRow(10); t.values = ['Total / 25', '', { formula: 'SUM(C5:C9)', result: r.tg }, { formula: 'SUM(D5:D9)', result: r.to }];
+    t.font = { bold: true }; t.getCell(3).alignment = t.getCell(4).alignment = { horizontal: 'center' };
+    bordures(wjj, 5, 10, 4);
+    wjj.getRow(12).values = ['Vainqueur', r.gagnant ? nomEquipe(r.gagnant) : 'À départager'];
+    wjj.getRow(13).values = ['Meilleur orateur', S.jury.meilleur ? orateur(S.jury.meilleur).nom : ''];
+    wjj.getCell('A12').font = wjj.getCell('A13').font = { bold: true };
+  }
+
+  /* --- Notation --- */
+  const wn = wb.addWorksheet('Notation', { views: [{ state: 'frozen', ySplit: 1 }], properties: { tabColor: { argb: XL.or } } });
+  wn.columns = [
+    { header: 'N°', key: 'n', width: 6 }, { header: 'Orateur', key: 'nom', width: 24 }, { header: 'Équipe', key: 'eq', width: 15 }, { header: 'Rôle', key: 'role', width: 20 },
+    { header: `Note collective (/${S.notation.sur})`, key: 'c', width: 13 }, { header: 'Bonus / malus', key: 'b', width: 10 }, { header: `Note finale (/${S.notation.sur})`, key: 'f', width: 12 },
+    { header: 'Remarques (sans horodatage)', key: 'rem', width: 90 },
+  ];
+  S.ordre.forEach((o, i) => {
+    const n = noteDe(o), lig = i + 2;
+    const rems = remarquesDe(o.id).map(c => `${c.cachee ? '(cachée) ' : ''}${c.texte}`).join('\n');
+    const rr = wn.addRow({ n: i + 1, nom: o.nom, eq: COTE[o.equipe], role: o.role, c: n.c, b: n.b,
+      f: n.absent ? 'Absent' : { formula: `IF(E${lig}="","",MIN(${S.notation.sur},MAX(0,E${lig}+F${lig})))`, result: n.f == null ? '' : n.f }, rem: rems });
+    rr.getCell('eq').fill = fillEq(o.equipe); rr.getCell('eq').font = fontEq(o.equipe); rr.getCell('nom').font = { bold: true };
+    rr.getCell('f').font = { bold: true };
+    rr.getCell('rem').alignment = { wrapText: true, vertical: 'top' };
+    ['n', 'c', 'b', 'f'].forEach(k => { rr.getCell(k).alignment = { horizontal: 'center', vertical: 'top' }; });
+  });
+  wn.getColumn('c').numFmt = wn.getColumn('f').numFmt = '0.##';
+  wn.getColumn('b').numFmt = '+0.##;-0.##;0';
+  enteteXL(wn, 1);
+  bordures(wn, 2, S.ordre.length + 1, 8);
+  const gen = remarquesDe(null);
+  if (gen.length) {
+    const rg = wn.getRow(S.ordre.length + 3); rg.getCell(2).value = 'Remarques générales'; rg.getCell(2).font = { bold: true };
+    rg.getCell(8).value = gen.map(c => `${c.cachee ? '(cachée) ' : ''}${c.texte}`).join('\n'); rg.getCell(8).alignment = { wrapText: true, vertical: 'top' };
+  }
+
+  /* --- Enregistrements --- */
+  if (Rec.fichiers.length) {
+    const wa = wb.addWorksheet('Enregistrements', { views: [{ state: 'frozen', ySplit: 1 }] });
+    wa.columns = [{ header: 'Fichier', key: 'f', width: 60 }, { header: 'Orateur', key: 'o', width: 24 }, { header: 'Début (T+)', key: 'd', width: 12 }, { header: 'Fin (T+)', key: 'e', width: 12 }, { header: 'Taille (Ko)', key: 'k', width: 11 }];
+    enteteXL(wa, 1);
+    Rec.fichiers.forEach(f => {
+      const o = f.meta && f.meta.orateur ? orateur(f.meta.orateur) : null;
+      wa.addRow({ f: f.nom, o: o ? o.nom : 'Séance entière', d: f.meta && f.meta.debut != null ? jourXL(Math.floor(f.meta.debut / 1000)) : null, e: f.meta && f.meta.fin != null ? jourXL(Math.floor(f.meta.fin / 1000)) : null, k: Math.round(f.blob.size / 1024) });
+    });
+    wa.getColumn('d').numFmt = wa.getColumn('e').numFmt = '[h]:mm:ss';
+  }
+
+  /* --- Paramètres --- */
+  const wpm = wb.addWorksheet('Paramètres', { views: [{ showGridLines: false }] });
+  wpm.columns = [{ width: 36 }, { width: 50 }];
+  titreXL(wpm, 'Paramètres et ordre de passage', null, 2);
+  const par = [['Motion', motion], ['Type', typeMotion(motion)[0]], ['Équipe Gouvernement', nomEquipe('G')], ['Équipe Opposition', nomEquipe('O')],
+    ['Temps de parole', mmss(S.cfg.tParole)], ['Temps protégé', mmss(S.cfg.tProtege)], ['Temps de grâce', mmss(S.cfg.tGrace)],
+    ['POI attendus par intervention', S.cfg.poiMax], ['Temps ajouté par POI (s)', S.cfg.poiBonus], ['Durée maximale d’un POI (s)', S.cfg.poiDuree],
+    ['Sifflets', S.cfg.sifflets ? 'Oui' : 'Non']];
+  par.forEach(([k, v], i) => { const rr = wpm.getRow(3 + i); rr.values = [k, v]; rr.getCell(1).font = { color: { argb: XL.gris } }; rr.getCell(2).alignment = { wrapText: true }; });
+  let pr = 3 + par.length + 1;
+  const ho = wpm.getRow(pr); ho.values = ['Ordre de passage', '']; ho.getCell(1).font = { bold: true, name: 'Georgia', size: 12 };
+  S.ordre.forEach((o, i) => { const rr = wpm.getRow(++pr); rr.values = [`${i + 1}. ${o.nom}`, `${o.role} · ${COTE[o.equipe]}`]; rr.getCell(2).font = fontEq(o.equipe); });
+
+  const buf = await wb.xlsx.writeBuffer();
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+function nomExport(ext) {
+  const d = new Date(S.seance ? S.seance.t0 : Date.now());
+  const base = slug(S.cfg.titre.trim() || S.cfg.motion.trim() || 'debat').slice(0, 40);
+  return `CR_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${base}.${ext}`;
+}
+$('#btn-xlsx').addEventListener('click', async e => {
+  const b = e.currentTarget; b.disabled = true; const lib = b.textContent; b.textContent = 'Préparation…';
+  try { const blob = await construireExcel(); await offrirFichier(nomExport('xlsx'), blob); }
+  catch (err) { toast(err && err.message === 'excel' ? 'Module Excel non chargé : vérifiez la connexion puis rechargez' : 'Échec de la création du fichier Excel'); console.error(err); }
+  finally { b.disabled = false; b.textContent = lib; }
+});
+$('#btn-zip').addEventListener('click', async e => {
+  if (!window.JSZip) { toast('Module zip non chargé : vérifiez la connexion puis rechargez'); return; }
+  const b = e.currentTarget; b.disabled = true; const lib = b.textContent; b.textContent = 'Préparation…';
+  try {
+    const zip = new JSZip(), dossier = zip.folder(nomExport('zip').replace('CR_', 'Audio_').replace(/\.zip$/, ''));
+    Rec.fichiers.forEach(f => dossier.file(f.nom, f.blob, { binary: true }));
+    const lignes = Rec.fichiers.map(f => { const o = f.meta && f.meta.orateur ? orateur(f.meta.orateur) : null; return `${f.nom}\t${o ? o.nom : 'Séance entière'}\t${f.meta && f.meta.debut != null ? tplus(f.meta.debut) : ''} → ${f.meta && f.meta.fin != null ? tplus(f.meta.fin) : ''}`; });
+    dossier.file('lisez-moi.txt', `polem.os · enregistrements de la séance\r\nMotion : ${S.cfg.motion.trim()}\r\n\r\n${lignes.join('\r\n')}\r\n\r\nConvertir en mp3 (ffmpeg) :\r\n  for f in *.${Rec.ext}; do ffmpeg -i "$f" -q:a 4 "\${f%.*}.mp3"; done\r\n`);
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+    await offrirFichier(nomExport('zip').replace('CR_', 'Audio_'), blob);
+  } catch (err) { toast('Échec de la création du zip'); console.error(err); }
+  finally { b.disabled = false; b.textContent = lib; }
+});
+
+/* ============================================================
+   Vues, restauration, démarrage
+   ============================================================ */
+function afficherVue(v) {
+  $('#v-setup').hidden = v !== 'setup';
+  $('#v-debate').hidden = v !== 'debate';
+  $('#v-report').hidden = v !== 'report';
+  memo.clear();
+}
+
+function restaurerSeance() {
+  const sv = LS.get(K_SEANCE); if (!sv) return;
+  const savedAt = sv.savedAt || Date.now();
+  delete sv.savedAt;
+  S = Object.assign(S, sv, { ui: { registre: true, dock: true } });
+  S.cfg.audio = false;
+  if (!S.notation) S.notation = notationDefaut();
+  const sp = spCourant();
+  if (S.phase === 'debate' && sp && S.etat === 'parole') {
+    sp.acc = sp.acc + Math.max(0, savedAt - sp.runStart); sp.runStart = null;
+    sp.pauses.push({ debut: savedAt - S.seance.t0, fin: null, motif: 'interruption' });
+    S.etat = 'pause'; S.motifPause = 'interruption';
+  }
+  appliquerSalle();
+  log('restauration', 'Rechargement de la page');
+  $('#restore').hidden = true;
+  if (S.phase === 'report') { afficherVue('report'); rendreBilan(); }
+  else { S.phase = 'debate'; afficherVue('debate'); rendreSeance(); garderEcran(); }
+  toast('Séance restaurée : chrono suspendu, Espace pour reprendre');
+}
+
+function demarrer() {
+  const cfg = LS.get(K_CFG);
+  if (cfg && cfg.equipes) { S.cfg = Object.assign(cfgDefaut(), cfg, { audio: false }); }
+  bornerTemps();
+  appliquerSalle();
+  brancherSetup();
+  rendreSetup();
+  const sv = LS.get(K_SEANCE);
+  if (sv && sv.seance && (sv.phase === 'debate' || sv.phase === 'report')) {
+    $('#restore-info').textContent = `« ${(sv.cfg.motion || 'Motion').slice(0, 80)} », ${sv.phase === 'report' ? 'compte rendu' : `intervention ${Math.min(sv.cur + 1, sv.ordre.length)} / ${sv.ordre.length}`}, ouverte à ${heure(sv.seance.t0)}.`;
+    $('#restore').hidden = false;
+  }
+  if (!Rec.supporte()) { $('#statut-micro').textContent = 'Enregistrement non pris en charge par ce navigateur.'; $('#f-audio').disabled = true; }
+}
+demarrer();
+
+// Accès de test (console) : window.__polemos.S
+window.__polemos = { get S() { return S; }, Rec };
+})();
+</script>
+
+</body></html>
